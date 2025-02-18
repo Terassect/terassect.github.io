@@ -1,4 +1,20 @@
+import PointerHandler from "./PointerHandler.js"
+
+
+function log(e){
+    console.log(e);
+}
+
+
 class PianoRoll extends HTMLElement{
+
+socket;
+log(e){
+    if(this.socket){
+        this.socket.send(e)
+    }
+    console.log(e)
+}
 
 colors = {
     note: 'rgb(200,20,200)',
@@ -8,6 +24,7 @@ colors = {
 
 pr;
 pro;
+
 
 selectedNoteIdxs = [];
 quantBeats = 1;
@@ -42,13 +59,16 @@ pattern = {
 
 noteCopyBuffer = [];
 
+pointerHandler;
+
 constructor() {
     // Always call super first in constructor
     super();
 }
 
 connectedCallback() {
-
+    // this.socket = new WebSocket("wss://192.168.1.4:8765");
+    console.log("Yes" + Date.now())
     this.onscroll = (e) =>{
         this.log(e)
     }
@@ -59,6 +79,9 @@ connectedCallback() {
     this.style.margin = "0px";
     this.style.display = "grid";
     this.style.gridTemplateColumns = "1fr 9fr";
+    this.style.touchAction = "none";
+
+    // customElements.define('pointer-handler',PointerHandler);
 
     this.innerHTML = `
         <div id="buttons">
@@ -98,11 +121,18 @@ connectedCallback() {
     this.prCtx = this.pr.getContext("2d");
     this.proCtx = this.pro.getContext("2d");
 
+    if(!this.pointerHandler){
+        customElements.define('pointer-handler',PointerHandler);
+        this.pointerHandler = new PointerHandler();
+        canvases.appendChild(this.pointerHandler);
+    }
 
-    [this.pr,this.pro].forEach( e =>{
+    [this.pr,this.pro,this.pointerHandler].forEach( e =>{
         e.style.position = 'absolute'
         e.style.border = "1px solid #000000";
     
+        e.style.top = canvases.style.top;
+        e.style.left = canvases.style.left;
         e.style.width = canvases.clientWidth.toString()*0.99 +'px';
         e.style.height = canvases.clientHeight.toString()*0.99 +'px';
         e.style.margin = '0px';
@@ -113,7 +143,40 @@ connectedCallback() {
         e.height = parseInt(e.style.height);
     });
 
+
+    this.pointerHandler.doubleDrag = (z,zPrev) => {
+        const t00 = this.xToTime( zPrev[0].x );
+        const t01 = this.xToTime( zPrev[1].x );
+    
+        //find tr such that xToT(z[0].x) == t00 and xToT(z[1].x) == t01
+        const den= (z[1].x-z[0].x);
+
+        var tr = this.visibleTimeRange;
+
+        const thresh=100;
+
+        if( Math.abs(den) < thresh ){
+            const c = this.xToTime(0.5*(z[1].x + z[0].x));
+            const dc = c - 0.5*(t00+t01);
+
+            tr[0] -= dc;
+            tr[1] -= dc;
+            
+        } else {
+            const W = this.pro.width;
+            tr[0] = -(t01*z[0].x - t00*z[1].x)/den;
+            tr[1] = -(W*(t00-t01) )/den + tr[0];
+        }
+
+        // tr = this.sanitizeRange(tr);
+
+        this.draw();
+    }
+    
+
     this.pro.onpointerdown = (e) => {
+        console.log("THIS is it")
+
         if(e.button == 0){
             const [x,y] = this.mouseEventToCanvasCoords(e);
     
@@ -158,7 +221,7 @@ connectedCallback() {
     
     this.pro.onmousemove = (e) => {
         this.drawOverlay();
-    
+
         const [x,y] = this.mouseEventToCanvasCoords(e);
         this.loopDragHandlePaths().forEach(path => {
             if (this.proCtx.isPointInPath(path, x, y)){
@@ -177,7 +240,7 @@ connectedCallback() {
     
     this.pro.onpointermove = (e) =>{
         const c = this.mouseEventToCanvasCoords(e);
-
+        console.log(e.pointerId)
         // this.log([e.x,e.y])
         if(e.buttons == 1){
             const [t,n] = this.mouseEventToQTimeAndNote(e);
@@ -214,6 +277,7 @@ connectedCallback() {
 
     this.draw();
     this.connectedCallbackFinished=true;
+
 }
 
 setPattern(pattern){
@@ -439,7 +503,7 @@ draw(){
     this.prCtx.lineWidth=0.5;
 
     const blackNotes = [1,3,6,8,10];
-    for (var i = this.visibleNoteRange[0]; i<(this.visibleNoteRange[1]); i++ ){
+    for (var i = Math.floor(this.visibleNoteRange[0]); i<(this.visibleNoteRange[1]); i++ ){
         const y = this.noteToY(i);
         const yp1 = this.noteToY(i+1);
 
@@ -504,70 +568,32 @@ draw(){
         this.drawLinesAtQuantLevel(q,lineWi, true);
     }
     
-
-    // const maxNumTimeSteps = 16;
-
-    // ///find the subdivision that gives displays at between 16 and 32 steps?
-    // // len*2**x > 16    ->   floor(log2(16/len))
-
-    // var beatSubDivBase = 2;
-    // var q = Math.round (Math.log(maxNumTimeSteps/lenBeats)/Math.log(beatSubDivBase)   );
-    // this.quantBeats = 1/Math.pow(2,q)
-    // var ts = []
-    // var xs = []
-    // const startT = Math.floor((this.visibleTimeRange[0])*this.quantBeats)/this.quantBeats;
-    // for (var t = startT ; t < this.visibleTimeRange[1] ; t+= this.quantBeats){
-    //     var x = this.timeToX(t)
-
-    //     if(x == null){continue;}
-
-    //     var lineW = 1
-    //     for(var i=0; i<4; i++){
-    //         if(t % Math.pow(2,i) === 0){
-    //             lineW *= 1.5
-    //             if(i==2){ this.prCtx.strokeText(i.toString(),x,0) }
-    //         }
-    //     }
-        
-    //     this.prCtx.strokeStyle = 'rgb(150,150,150)'
-
-    //     this.prCtx.lineWidth = 1;
-    //     this.prCtx.strokeText((t).toString(),x+0.5,10);
-    //     this.prCtx.stroke();
-
-    //     this.prCtx.lineWidth=lineW;
-    //     this.prCtx.beginPath();
-    //     this.prCtx.moveTo(x,0) ;
-    //     this.prCtx.lineTo(x,this.pr.height);
-    //     this.prCtx.stroke();   
-    // }
-    
-    this.prCtx.fillStyle = this.colors.note
+    this.prCtx.fillStyle = this.colors.note;
 
     this.visibleNotePaths().forEach( path => {this.prCtx.fill(path)})
-
 
     const dragBoxWidth = 15;
     const dragBoxHeight = dragBoxWidth*1.6;
 
     //red-gray outside playing region
     this.prCtx.fillStyle = 'rgba(100,80,80,0.3)';
-    this.prCtx.fillRect(0,0,this.timeToX(this.pattern.se[0]), this.pr.height);
-    this.prCtx.fillRect(this.timeToX(this.pattern.se[1]),0, this.pr.width, this.pr.height);
+    var [x0,x1]= [this.timeToX(this.pattern.se[0]), this.timeToX(this.pattern.se[1])];
+
+    this.prCtx.fillRect(0,0,x0, this.pr.height);
+    this.prCtx.fillRect(x1,0, this.pr.width-x1, this.pr.height);
     this.startendDragHandlePaths().forEach( path => { this.prCtx.fill(path);});
 
     //light blue loop region
-    this.prCtx.fillStyle = 'rgba(200,200,255,0.3)'
-    this.prCtx.fillRect(
-        this.timeToX(this.pattern.lr[0]), 0, 
-        this.timeToX(this.pattern.lr[1])-this.timeToX(this.pattern.lr[0]) ,this.pr.height 
-    )
+    this.prCtx.fillStyle = 'rgba(200,200,255,0.3)';
+    var [x0,x1]= [this.timeToX(this.pattern.lr[0]), this.timeToX(this.pattern.lr[1])];
+
+    this.prCtx.fillRect( x0, 0, x1-x0 ,this.pr.height)
     this.prCtx.fillStyle = 'rgba(200,200,255,0.5)'
 
     this.loopDragHandlePaths().forEach( path => {this.prCtx.fill(path);});
 
+    this.prCtx.fillStyle = this.colors.noteH;
     this.selectedNoteIdxs.forEach( i => {
-        this.prCtx.fillStyle = this.colors.noteH;
         this.prCtx.fill( this.pathOfNote( this.pattern.ns[i]) );
     })
 
@@ -658,11 +684,11 @@ pan(e){
     this.visibleTimeRange[0] += dx;
     this.visibleTimeRange[1] += dx;
 
-    var dy = e.movementY;
-    if(dy > 10 || dy < -10){
-        this.visibleNoteRange[0] += Math.sign(dy);
-        this.visibleNoteRange[1] += Math.sign(dy);
-    }
+    var dy = e.movementY*(this.visibleNoteRange[1]-this.visibleNoteRange[0])/this.pr.height;
+
+    this.visibleNoteRange[0] += dy;
+    this.visibleNoteRange[1] += dy;
+
     this.draw();
 }
 
@@ -697,8 +723,6 @@ zoom(e){
     // console.log(visibleNoteRange)
     this.draw();
 }
-
-
 
 } ///HTMLElement
 

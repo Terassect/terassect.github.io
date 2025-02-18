@@ -1,5 +1,5 @@
 import PianoRoll from './pianoRoll.js'
-import './JSONCrush.js'
+// import './JSONCrush.js'
 import JSONCrush from './JSONCrush.js';
 // ;
 /*
@@ -89,6 +89,7 @@ class Riffagram_View extends HTMLElement
         this.patchConnection.sendEventOrValue('start',);
 
         this.querySelector('#playButton').onclick = (e) => {
+            console.log("STOP PRESSED")
             this.patchConnection.sendEventOrValue('start',[]);
         }
 
