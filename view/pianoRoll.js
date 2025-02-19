@@ -134,11 +134,19 @@ class PianoRoll extends HTMLElement {
         }
 
         this.querySelector("#duplicateButton").onclick = (e) =>{
-
+            duplicate();
         }
 
         const duplicate = () => {
+            const Dt = this.timeSelection[1] -this.timeSelection[0];
+            this.selectedNoteIdxs.forEach(i => {
+                const oldNote = this.pattern.ns[i].slice();
+                this.addNote(oldNote);
+                this.moveNote(i,oldNote[0]+Dt,oldNote[2]);
+            })
 
+            this.timeSelection[0] += Dt;
+            this.timeSelection[1] += Dt;
         }
 
 
