@@ -92,17 +92,12 @@ class PianoRoll extends HTMLElement {
 
         this.innerHTML = `
         <style>
-        #moveButton {
-            color: blue;
-            background: blue;
-            accent-color: red;
-            background-color: yellow;
-        }
+
         </style>
         <div id="buttons">
             <input id="deleteButton" type="button" value="del" />
             <input id="duplicateButton" type="button" value="dupe" />
-            <input id="moveButton" type="checkbox" value="Move" />
+            <input id="moveButton" type="button" value="Move" />
 
         </div>
         <div id="canvases">
@@ -113,6 +108,14 @@ class PianoRoll extends HTMLElement {
     `;
 
         var moveButton = this.querySelector("#moveButton");
+        moveButton.onclick = (e) =>{
+            moveButton.checked = !moveButton.checked;
+            moveButton.style.background = moveButton.checked ? "blue":"brown";
+            console.log(moveButton);
+        }
+        moveButton.checked=true;
+        moveButton.onclick();
+
 
         for (const button of this.querySelector('#buttons').children) {
             button.style.width = "100%";
@@ -138,7 +141,6 @@ class PianoRoll extends HTMLElement {
 
         }
 
-        // moveButton.onclick
 
         const setButtonsVisibility = (shouldSee) => {
             for (const button of this.querySelector('#buttons').children) {
@@ -220,10 +222,9 @@ class PianoRoll extends HTMLElement {
             this.currentOperation = this.defaultOperation;
             z.t = this.xToTime(z.x);
             z.n = this.yToNote(z.y)
-            //Scan buttons for something that would change this.currentOperation
+
             if(this.querySelector("#moveButton").checked){this.currentOperation="move"};
 
-            this.timeSelection = null;
 
         }
 
@@ -246,14 +247,14 @@ class PianoRoll extends HTMLElement {
                         this.timeSelection[0] = this.floor(sts[0],this.quantBeats);
                         this.timeSelection[1] = Math.ceil(sts[1]/this.quantBeats)*this.quantBeats;
                     } 
-                    
+
                     const tr = this.sanitizeRange(this.selectionCorners.map(e=>e.t))
                     const nr = this.sanitizeRange(this.selectionCorners.map(e=>e.n))
                     this.selectedNoteIdxs = this.noteIdxsInRanges(tr, nr);
 
                     this.drawOverlay();
+                    break;
 
-                break;
                 case "move":
                     if(!this.selectedNoteDeltas){
                         const [t0,n0] = [this.xToTime(z0.x),this.yToNote(z0.y)]
@@ -264,6 +265,10 @@ class PianoRoll extends HTMLElement {
                                 n: this.pattern.ns[i][2] - n0 
                             }
                         })
+
+                        this.selectedNoteDeltas.push({t:this.timeSelection[0]-t0})
+                        this.selectedNoteDeltas.push({t:this.timeSelection[1]-t0})
+
                     }
 
                     var [t,n] = [ this.xToTime(z.x), this.yToNote(z.y) ];
@@ -276,7 +281,12 @@ class PianoRoll extends HTMLElement {
                         const newNote = Math.floor(n + this.selectedNoteDeltas[c].n);
                         this.moveNote(i,newTime, newNote)
                     })
-                break;
+
+                    this.selectedNoteDeltas.slice(-2).forEach((d,i) => {
+                        this.timeSelection[i] = t + d.t;
+                    })
+
+                    break;
             }
 
 
@@ -298,7 +308,7 @@ class PianoRoll extends HTMLElement {
                 this.draw();
             }
 
-            setButtonsVisibility( this.selectedNoteIdxs > 0 )
+            setButtonsVisibility( this.selectedNoteIdxs.length > 0 )
 
         }
 
@@ -315,8 +325,8 @@ class PianoRoll extends HTMLElement {
                     break;
             }
 
-            this.querySelector("#deleteButton").style.visibility = this.selectedNoteIdxs.length >= 1 ? "visible" : "hidden";
-            this.querySelector("#moveButton").style.visibility = this.selectedNoteIdxs.length >= 1 ? "visible" : "hidden";
+            setButtonsVisibility( this.selectedNoteIdxs.length > 0 )
+
 
             this.selectionCorners = null;
             this.selectedNoteDeltas = null;
