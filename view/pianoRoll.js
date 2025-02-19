@@ -109,27 +109,34 @@ class PianoRoll extends HTMLElement {
         </div>
     `;
 
-        var deleteButton = this.querySelector("#deleteButton");
-        deleteButton.onclick = (e) => {
-            this.removeNotes(this.selectedNoteIdxs)
-            this.selectedNoteIdxs = [];
-            this.currentOperation = "pencil";
-            hideButtons();
-            this.draw();
-        }
+        var moveButton = this.querySelector("#moveButton");
+
         for (const button of this.querySelector('#buttons').children) {
             button.style.width = "100%";
             button.style.height = "25%";
             button.style.visibility = "hidden";
         }
 
-        var moveButton = this.querySelector("#moveButton");
+        var deleteButton = this.querySelector("#deleteButton");
+        deleteButton.onclick = (e) => {
+            turnOffToggles();
+            hideButtons();
+            this.removeNotes(this.selectedNoteIdxs)
+            this.selectedNoteIdxs = [];
+            this.currentOperation = "pencil";
+            this.draw();
+        }
+
         // moveButton.onclick
 
         const hideButtons =() => {
             for (const button of this.querySelector('#buttons').children) {
                 button.style.visibility = "hidden";
             }
+        }
+
+        const turnOffToggles = () =>{
+            moveButton.checked=false;
         }
 
         var canvases = this.querySelector('#canvases')
@@ -202,7 +209,6 @@ class PianoRoll extends HTMLElement {
 
             //Scan buttons for something that would change this.currentOperation
             if(this.querySelector("#moveButton").checked){this.currentOperation="move"}
-
 
         }
 
@@ -658,7 +664,7 @@ class PianoRoll extends HTMLElement {
         const tq = this.quantizeTime(t);
         const note = [tq, tq + this.quantBeats, Math.floor(n), 100]
         this.addNote(note);
-        this.selectedNoteIdxs.push(this.pattern.ns.length - 1);
+        this.selectedNoteIdxs = [this.pattern.ns.length-1]//.push(this.pattern.ns.length - 1);
         this.selectionCorners = null;
     }
 
