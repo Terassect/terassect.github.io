@@ -9,8 +9,13 @@ class PointerHandler extends HTMLElement{
 
     getCurrentlyHeld(){ return this.downs.map(d=>this.heldCoords[d.id])}
 
+    doubleUp(z,z0){}
     doubleDrag(z,zPrev){}
+    doubleDown(z){}
+
+    singleUp(z,z0){}
     singleDrag(z,z0){}
+    singleDown(z){}
 
     convertToLocal(event){
         const rect = this.getBoundingClientRect();
@@ -37,12 +42,23 @@ class PointerHandler extends HTMLElement{
             const e = this.convertToLocal(event)
             this.downs.push(structuredClone(e));
             this.heldCoords[e.id] = {x:e.x, y:e.y};
-            console.log("pointer",e)
+            // console.log("pointer",e)
+            
+            if(this.downs.length == 1){this.singleDown(e)}
+            if(this.downs.length == 2){this.doubleDown(e)}
+
         }
 
-        this.onpointerup = (e) =>{
+        this.onpointerup = (event) =>{
+            const e = this.convertToLocal(event)
+            if(this.downs.length == 1){this.singleUp(e, this.downs[0])}
+            if(this.downs.length == 2){this.doubleUp(e,this.downs[0])}
+
             this.downs = this.downs.filter(d => {d.id != e.id});
+
         }
+
+        this.onpointerleave= (e)=>{this.onpointerup(e)}
 
         this.onpointermove = (event) => {
 
@@ -53,7 +69,7 @@ class PointerHandler extends HTMLElement{
             const h = this.getCurrentlyHeld().slice();
 
             if(this.downs.length == 1 ){
-                this.singleDrag(h,this.downs[0]);
+                this.singleDrag(h[0],hPrev[0],this.downs[0]);
             }
             if(this.downs.length == 2 ) {
                 this.doubleDrag(h,hPrev);
