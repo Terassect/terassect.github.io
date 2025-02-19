@@ -40,12 +40,12 @@ class PointerHandler extends HTMLElement{
 
         this.onpointerdown = (event) => {
             const e = this.convertToLocal(event)
-            this.downs.push(structuredClone(e));
+            this.downs.push(e);
             this.heldCoords[e.id] = {x:e.x, y:e.y};
-            // console.log("pointer",e)
+            console.log("pointer",event)
             
-            if(this.downs.length == 1){this.singleDown(e)}
-            if(this.downs.length == 2){this.doubleDown(e)}
+            if(this.downs.length == 1){this.singleDown(this.downs[0])}
+            if(this.downs.length == 2){this.doubleDown(this.downs[1])}
 
         }
 

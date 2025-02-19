@@ -17,7 +17,8 @@ class PianoRoll extends HTMLElement {
     colors = {
         note: 'rgb(200,20,200)',
         noteH: 'rgb(255,0,255)',
-        gridLine: 'rgb(150,150,150)'
+        gridLine: 'rgb(150,150,150)',
+        timeSelection: 'rgb(100,255,100,0.2)'
     }
 
     pr;
@@ -63,6 +64,7 @@ class PianoRoll extends HTMLElement {
     currentOperation = "";
 
     selectedNoteDeltas;
+    timeSelection;
 
     numSortFn = (a, b) => { return a - b; }
 
@@ -99,6 +101,7 @@ class PianoRoll extends HTMLElement {
         </style>
         <div id="buttons">
             <input id="deleteButton" type="button" value="del" />
+            <input id="duplicateButton" type="button" value="dupe" />
             <input id="moveButton" type="checkbox" value="Move" />
 
         </div>
@@ -120,20 +123,29 @@ class PianoRoll extends HTMLElement {
         var deleteButton = this.querySelector("#deleteButton");
         deleteButton.onclick = (e) => {
             turnOffToggles();
-            hideButtons();
+            setButtonsVisibility(false);
             this.removeNotes(this.selectedNoteIdxs)
             this.selectedNoteIdxs = [];
             this.currentOperation = "pencil";
             this.draw();
         }
 
+        this.querySelector("#duplicateButton").onclick = (e) =>{
+
+        }
+
+        const duplicate = () => {
+
+        }
+
         // moveButton.onclick
 
-        const hideButtons =() => {
+        const setButtonsVisibility = (shouldSee) => {
             for (const button of this.querySelector('#buttons').children) {
-                button.style.visibility = "hidden";
+                button.style.visibility = shouldSee ? "visible" : "hidden";
             }
         }
+
 
         const turnOffToggles = () =>{
             moveButton.checked=false;
@@ -206,24 +218,39 @@ class PianoRoll extends HTMLElement {
 
         this.pointerHandler.singleDown = (z) => {
             this.currentOperation = this.defaultOperation;
-
+            z.t = this.xToTime(z.x);
+            z.n = this.yToNote(z.y)
             //Scan buttons for something that would change this.currentOperation
-            if(this.querySelector("#moveButton").checked){this.currentOperation="move"}
+            if(this.querySelector("#moveButton").checked){this.currentOperation="move"};
+
+            this.timeSelection = null;
 
         }
 
         this.pointerHandler.singleDrag = (z,zPrev, z0) => {
             if (this.currentOperation == "pencil") { this.currentOperation = "select"; }
             
-            
             switch (this.currentOperation) {
                 case "select":
-                    this.selectionCorners = [z0, z].map( e =>{
-                        return {
-                            x: e.x, y: e.y,
-                            t: this.xToTime(e.x), n: this.yToNote(e.y)
-                        }
-                    });
+                    if(!this.selectionCorners){
+                        this.selectionCorners = [];
+                        this.timeSelection = [];
+                        this.selectionCorners[0] = {...z0,t:this.xToTime(z0.x),n:this.yToNote(z0.y)};
+                        this.timeSelection[0] = this.selectionCorners[0].t;
+                    }
+                    this.selectionCorners[1] = { ...z, t:this.xToTime(z.x), n:this.yToNote(z.y) };
+                    this.timeSelection = this.selectionCorners.map(c => this.quantizeTime(c.t+this.quantBeats/2));  // +qb/2 is for round instead of floor
+
+                    if(this.timeSelection[0] == this.timeSelection[1]){
+                        const sts = this.selectionCorners.map(c=>c.t).toSorted((a,b)=>a-b)
+                        this.timeSelection[0] = this.floor(sts[0],this.quantBeats);
+                        this.timeSelection[1] = Math.ceil(sts[1]/this.quantBeats)*this.quantBeats;
+                    } 
+                    
+                    const tr = this.sanitizeRange(this.selectionCorners.map(e=>e.t))
+                    const nr = this.sanitizeRange(this.selectionCorners.map(e=>e.n))
+                    this.selectedNoteIdxs = this.noteIdxsInRanges(tr, nr);
+
                     this.drawOverlay();
 
                 break;
@@ -239,16 +266,40 @@ class PianoRoll extends HTMLElement {
                         })
                     }
 
-                    const [t,n] = [ this.xToTime(z.x), this.yToNote(z.y) ]
+                    var [t,n] = [ this.xToTime(z.x), this.yToNote(z.y) ];
+                    const t0 = z0.t;
+                    t = t0 + this.quantizeTime(t-t0);
 
                     this.selectedNoteIdxs.forEach((i,c) =>{
-                        const newTime = this.quantizeTime( t + this.selectedNoteDeltas[c].t );
+                        const newTime = t + this.selectedNoteDeltas[c].t ;
+
                         const newNote = Math.floor(n + this.selectedNoteDeltas[c].n);
                         this.moveNote(i,newTime, newNote)
                     })
                 break;
-
             }
+
+
+            ///Scroll if drag near margins
+            const scrollMarginSize=this.pro.width*0.1;
+            const scrollAmtT = (this.visibleTimeRange[1]-this.visibleTimeRange[0])*0.0025;
+            const scrollAmtN = (this.visibleTimeRange[1]-this.visibleTimeRange[0])*0.0025;
+
+            const dt = (z.x < scrollMarginSize ? - scrollAmtT : 
+                ( z.x > (this.pro.width-scrollMarginSize) ? scrollAmtT : 0 ));
+
+            const dn = ["loopRange","startend"].includes(this.currentOperation) ? 0:
+                z.y < scrollMarginSize ? + scrollAmtN:
+                    z.y > this.pro.height-scrollMarginSize ? -scrollAmtN : 0;
+
+            if(dt != 0 || dn != 0){
+                this.visibleTimeRange = this.visibleTimeRange.map(t => t+dt);
+                this.visibleNoteRange = this.visibleNoteRange.map(n => n+dn);
+                this.draw();
+            }
+
+            setButtonsVisibility( this.selectedNoteIdxs > 0 )
+
         }
 
         this.pointerHandler.singleUp = (z, z0) => {
@@ -259,6 +310,8 @@ class PianoRoll extends HTMLElement {
                     const tr = this.sanitizeRange(this.selectionCorners.map(e=>e.t))
                     const nr = this.sanitizeRange(this.selectionCorners.map(e=>e.n))
                     this.selectedNoteIdxs = this.noteIdxsInRanges(tr, nr);
+                    this.timeSelection.sort();
+                    // if(this.timeSelection[0] == this.timeSelection[1]){this.timeSelection[1] += this.quantBeats;}
                     break;
             }
 
@@ -366,7 +419,7 @@ class PianoRoll extends HTMLElement {
     }
 
     moveNote(i, t, n) {
-        console.log(i);
+        // console.log(i);
         const oldNote = this.pattern.ns[i].slice();
         this.pattern.ns[i][1] = t + (this.pattern.ns[i][1] - this.pattern.ns[i][0])
         this.pattern.ns[i][0] = t;
@@ -641,6 +694,12 @@ class PianoRoll extends HTMLElement {
             );
             this.proCtx.setLineDash([])
 
+        }
+
+        if(this.timeSelection){
+            this.proCtx.fillStyle = this.colors.timeSelection
+            const [x0,x1] = this.timeSelection.map(t => this.timeToX(t))
+            this.proCtx.fillRect(x0,0,x1-x0,this.pro.height);
         }
 
     }
