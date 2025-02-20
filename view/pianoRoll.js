@@ -247,12 +247,23 @@ class PianoRoll extends HTMLElement {
 
             if(this.querySelector("#moveButton").checked){this.currentOperation="move"};
 
+            this.loopDragHandlePaths().forEach((path,i) => {
+                if(this.prCtx.isPointInPath(path,z.x,z.y)){
+                    this.currentOperation=`loopRange${i}`;
+                }
+            })
 
+            this.startendDragHandlePaths().forEach( (path,i) => {
+                if(this.prCtx.isPointInPath(path,z.x,z.y)){
+                    this.currentOperation=`startend${i}`;
+                }
+            })
+            console.log(this.currentOperation);
         }
 
         this.pointerHandler.singleDrag = (z,zPrev, z0) => {
             if (this.currentOperation == "pencil") { this.currentOperation = "select"; }
-            
+            const qt = this.quantizeTime(this.xToTime(z.x));
             switch (this.currentOperation) {
                 case "select":
                     if(!this.selectionCorners){
@@ -309,8 +320,16 @@ class PianoRoll extends HTMLElement {
                     })
 
                     break;
-            }
 
+                    case "startend0": this.setStartend( this.pattern.se.with( 0, qt ) ); break;
+                    case "startend1": this.setStartend( this.pattern.se.with( 1, qt ) ); break;
+                    case "loopRange0": this.setLoop( this.pattern.lr.with( 0, qt ) ); break;
+                    case "loopRange1": this.setLoop( this.pattern.lr.with( 1, qt ) ); break;
+            }
+            console.log(this.currentOperation);
+            setButtonsVisibility( this.selectedNoteIdxs.length > 0 )
+
+            if(['startend','loopRang'].includes(this.currentOperation.slice(0,8))){return;}
 
             ///Scroll if drag near margins
             const scrollMarginSize=this.pro.width*0.1;
@@ -330,14 +349,17 @@ class PianoRoll extends HTMLElement {
                 this.draw();
             }
 
-            setButtonsVisibility( this.selectedNoteIdxs.length > 0 )
 
         }
 
         this.pointerHandler.singleUp = (z, z0) => {
 
             switch (this.currentOperation) {
-                case "pencil": this.pencilClick(z); break;
+                case "pencil":
+                    if( this.visibleNotePaths().every(path => this.proCtx.isPointInPath(path,z.x,z.y) == false ) ){
+                        this.pencilClick(z); 
+                    }
+                    break;
                 case "select":
                     const tr = this.sanitizeRange(this.selectionCorners.map(e=>e.t))
                     const nr = this.sanitizeRange(this.selectionCorners.map(e=>e.n))
