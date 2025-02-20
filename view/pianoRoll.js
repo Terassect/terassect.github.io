@@ -92,7 +92,9 @@ class PianoRoll extends HTMLElement {
 
         this.innerHTML = `
         <style>
-
+            #moveButton:active{
+                background: transparent;
+            }
         </style>
         <div id="buttons">
             <input id="deleteButton" type="button" value="del" />
@@ -108,11 +110,23 @@ class PianoRoll extends HTMLElement {
     `;
 
         var moveButton = this.querySelector("#moveButton");
+        var moveButtonAnimation = moveButton.animate([{background:"yellow"},{background:"red"},{background:"yellow"}] , {duration:1000, iterations:"Infinity"})
+
         moveButton.onclick = (e) =>{
             moveButton.checked = !moveButton.checked;
-            moveButton.style.background = moveButton.checked ? "blue":"brown";
-            console.log(moveButton);
+            // moveButton.style.background = moveButton.checked ? "blue":"brown";
+            // console.log(getComputedStyle(moveButton));
+            if(moveButton.checked){
+                moveButtonAnimation.play();
+            } else {
+                // moveButton.animate([{background:"grey"}],{duration:1000,iterations:1});
+                moveButtonAnimation.cancel();
+            }
         }
+
+        // moveButton.onmousedown = (e) =>{
+        //     console.log(getComputedStyle(moveButton));
+        // } ;
         moveButton.checked=true;
         moveButton.onclick();
 

@@ -25,8 +25,7 @@ class PointerHandler extends HTMLElement{
     }
 
     connectedCallback() {
-        document.addEventListener('contextmenu', function(event) { event.preventDefault(); });
-
+        document.oncontextmenu = (e) => {e.preventDefault();}
         var s = this.style;
         s.width = "100%";
         s.height = "100%";
@@ -49,10 +48,10 @@ class PointerHandler extends HTMLElement{
 
         }
 
-        this.onpointerup = (event) =>{
+        this.onpointerup = (event) => {
             const e = this.convertToLocal(event)
             if(this.downs.length == 1){this.singleUp(e, this.downs[0])}
-            if(this.downs.length == 2){this.doubleUp(e,this.downs[0])}
+            if(this.downs.length == 2){this.doubleUp(e, this.downs[0])}
 
             this.downs = this.downs.filter(d => {d.id != e.id});
 
