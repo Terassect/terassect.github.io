@@ -1,5 +1,8 @@
 
 class PointerHandler extends HTMLElement{
+    log (m){
+        logg(this.downs.length.toString() + " " + m)
+    }
 
     constructor(){super();}
 
@@ -43,7 +46,6 @@ class PointerHandler extends HTMLElement{
             this.downs.push(e);
             this.heldCoords[e.id] = {x:e.x, y:e.y};
 
-            logg("pointer down")
 
             if(this.downs.length == 1){
                 this.singleDown(this.downs[0])
@@ -51,22 +53,28 @@ class PointerHandler extends HTMLElement{
             }
             if(this.downs.length == 2){this.doubleDown(this.downs[1])}
 
+            this.log("down"  );
+
+
         }
 
         this.onpointerup = (event) => {
             const e = this.convertToLocal(event)
             if(this.downs.length == 1){this.singleUp(e, this.downs[0])}
             if(this.downs.length == 2){this.doubleUp(e, this.downs[0])}
-
-            this.downs = this.downs.filter(d => {d.id != e.id});
+            this.log("up "+e.id.toString()+" " +JSON.stringify(this.downs))
+            this.downs = this.downs.filter(d => d.id != e.id);
+            this.log(
+                
+                e.id.toString()+" " +JSON.stringify(this.downs))
 
         }
 
-        this.onpointerleave= (e)=>{this.onpointerup(e)}
+        // this.onpointerleave= (e)=>{this.onpointerup(e)}
 
         this.onpointermove = (event) => {
             if(this.clickTimeout){return;}
-            logg("pointer move")
+            this.log("move"  );
 
             const e = this.convertToLocal(event)
 
