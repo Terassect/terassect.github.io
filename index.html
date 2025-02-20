@@ -85,7 +85,18 @@
     .cmaj-small-text { font-size: 75%; }
 </style>
 
+<script>
+const socketette = new WebSocket("wss://192.168.1.4:8765");
+
+function logg (m)  {
+    if(socketette){
+        socketette.send(m);
+    }
+}
+</script>
+
 <script type="module">
+
 
 import * as patch from "./cmaj_Riffagram.js"
 import { createPatchViewHolder } from "./cmaj_api/cmaj-patch-view.js"

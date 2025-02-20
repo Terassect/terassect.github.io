@@ -1,11 +1,9 @@
+
+
 import PianoRoll from './pianoRoll.js'
-// import './JSONCrush.js'
 import JSONCrush from './JSONCrush.js';
-// ;
-/*
-    This simple web component just manually creates a set of plain sliders for the
-    known parameters, and uses some listeners to connect them to the patch.
-*/
+
+
 class Riffagram_View extends HTMLElement
 {
     pianoRoll ;
@@ -50,7 +48,6 @@ class Riffagram_View extends HTMLElement
                 stepsPerBeat: pattern.spb,
                 active: true
             }
-            console.log("sending pattern")
             this.patchConnection.sendEventOrValue("patternIn",pat,0);
         }
 
@@ -89,7 +86,6 @@ class Riffagram_View extends HTMLElement
         this.patchConnection.sendEventOrValue('start',);
 
         this.querySelector('#playButton').onclick = (e) => {
-            console.log("STOP PRESSED")
             this.patchConnection.sendEventOrValue('start',[]);
         }
 
@@ -99,20 +95,17 @@ class Riffagram_View extends HTMLElement
         }
 
         this.querySelector("#tempoInput").onchange = (e) => {
-            console.log(e)
             this.patchConnection.sendEventOrValue('tempoIn', this.querySelector("#tempoInput").value);
         }
 
 
         const postPatternToURL = (pattern) => {
             const un = JSON.stringify(pattern)
-            console.log(un,un.length)
 
             var url = JSONCrush.crush(un)
             url = encodeURIComponent(url);
             sessionStorage.setItem("path",url);
             url = window.location.origin + "/" +url;
-            console.log(url,url.length);
 
             window.history.pushState("state","",url);
         }
@@ -122,19 +115,16 @@ class Riffagram_View extends HTMLElement
             s=decodeURIComponent(s);
             try{
                 const pattern = JSON.parse( JSONCrush.uncrush(s) );
-                console.log("recovered pattern: ", pattern);
                 this.pianoRoll.setPattern(pattern);
 
                 this.pianoRoll.draw();
             } catch (error) {
-                console.log(error);
             }
         }
 
         var timeout;
         var urlIsDirty;
         this.pianoRoll.patternChanged = function (){
-            console.log("pattern changed")
             if(!timeout){
                 postPatternToURL(this.pattern);
                 timeout = setTimeout(()=>{

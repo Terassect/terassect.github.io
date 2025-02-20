@@ -1,4 +1,3 @@
-console.log("PointerHandler.js loaded")
 
 class PointerHandler extends HTMLElement{
 
@@ -6,6 +5,8 @@ class PointerHandler extends HTMLElement{
 
     downs = [];
     heldCoords = {};
+
+    clickTimeout;
 
     getCurrentlyHeld(){ return this.downs.map(d=>this.heldCoords[d.id])}
 
@@ -41,9 +42,13 @@ class PointerHandler extends HTMLElement{
             const e = this.convertToLocal(event)
             this.downs.push(e);
             this.heldCoords[e.id] = {x:e.x, y:e.y};
-            console.log("pointer",event)
-            
-            if(this.downs.length == 1){this.singleDown(this.downs[0])}
+
+            logg("pointer down")
+
+            if(this.downs.length == 1){
+                this.singleDown(this.downs[0])
+                this.clickTimeout = setTimeout(()=>{this.clickTimeout=null;},100)
+            }
             if(this.downs.length == 2){this.doubleDown(this.downs[1])}
 
         }
@@ -60,6 +65,8 @@ class PointerHandler extends HTMLElement{
         this.onpointerleave= (e)=>{this.onpointerup(e)}
 
         this.onpointermove = (event) => {
+            if(this.clickTimeout){return;}
+            logg("pointer move")
 
             const e = this.convertToLocal(event)
 

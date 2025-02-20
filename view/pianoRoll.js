@@ -1,18 +1,7 @@
 import PointerHandler from "./PointerHandler.js"
 
-function log(e) {
-    console.log(e);
-}
-
 class PianoRoll extends HTMLElement {
 
-    socket;
-    log(e) {
-        if (this.socket) {
-            this.socket.send(e)
-        }
-        console.log(e)
-    }
 
     colors = {
         note: 'rgb(200,20,200)',
@@ -23,7 +12,6 @@ class PianoRoll extends HTMLElement {
 
     pr;
     pro;
-
 
     selectedNoteIdxs = [];
     quantBeats = 1;
@@ -74,8 +62,6 @@ class PianoRoll extends HTMLElement {
     }
 
     connectedCallback() {
-        // this.socket = new WebSocket("wss://192.168.1.4:8765");
-        console.log("Yes" + Date.now())
         this.onscroll = (e) => {
             this.log(e)
         }
@@ -114,19 +100,13 @@ class PianoRoll extends HTMLElement {
 
         moveButton.onclick = (e) =>{
             moveButton.checked = !moveButton.checked;
-            // moveButton.style.background = moveButton.checked ? "blue":"brown";
-            // console.log(getComputedStyle(moveButton));
             if(moveButton.checked){
                 moveButtonAnimation.play();
             } else {
-                // moveButton.animate([{background:"grey"}],{duration:1000,iterations:1});
                 moveButtonAnimation.cancel();
             }
         }
 
-        // moveButton.onmousedown = (e) =>{
-        //     console.log(getComputedStyle(moveButton));
-        // } ;
         moveButton.checked=true;
         moveButton.onclick();
 
@@ -235,7 +215,6 @@ class PianoRoll extends HTMLElement {
             this.visibleNoteRange = pinchZoomPan(z, zPrev, 'y', this.yToNote.bind(this), this.pro.height)
 
             this.visibleNoteRange = this.sanitizeRange(this.visibleNoteRange);
-            console.log(this.visibleNoteRange);
             this.draw();
         }
 
@@ -258,7 +237,6 @@ class PianoRoll extends HTMLElement {
                     this.currentOperation=`startend${i}`;
                 }
             })
-            console.log(this.currentOperation);
         }
 
         this.pointerHandler.singleDrag = (z,zPrev, z0) => {
@@ -326,7 +304,6 @@ class PianoRoll extends HTMLElement {
                     case "loopRange0": this.setLoop( this.pattern.lr.with( 0, qt ) ); break;
                     case "loopRange1": this.setLoop( this.pattern.lr.with( 1, qt ) ); break;
             }
-            console.log(this.currentOperation);
             setButtonsVisibility( this.selectedNoteIdxs.length > 0 )
 
             if(['startend','loopRang'].includes(this.currentOperation.slice(0,8))){return;}
@@ -473,7 +450,6 @@ class PianoRoll extends HTMLElement {
     }
 
     moveNote(i, t, n) {
-        // console.log(i);
         const oldNote = this.pattern.ns[i].slice();
         this.pattern.ns[i][1] = t + (this.pattern.ns[i][1] - this.pattern.ns[i][0])
         this.pattern.ns[i][0] = t;
@@ -589,7 +565,6 @@ class PianoRoll extends HTMLElement {
 
     drawLinesAtQuantLevel(q, lineW = 1, shouldPrintT = false) {
         const startT = Math.floor((this.visibleTimeRange[0]) / q) * q;//+ (this.visibleTimeRange[0]<0 ? 1:0);
-        // console.log("drawing lines at ", q, startT)
 
         for (var t = startT; t < this.visibleTimeRange[1]; t += q) {
             this.prCtx.strokeStyle = this.colors.gridLine;
@@ -648,7 +623,6 @@ class PianoRoll extends HTMLElement {
 
         const minDt = Math.max(this.xToTime(minGridlineDistance) - this.xToTime(0), 0.001);
 
-        // console.log("minDt", minDt)
         var q = 1;
 
         if (minDt <= 0.5 / this.pattern.spb) {
@@ -682,7 +656,7 @@ class PianoRoll extends HTMLElement {
             }
             this.drawLinesAtQuantLevel(q);
         }
-        // console.log("q",q,minDt);
+
         this.quantBeats = q;
 
         var lineWi = 1;
