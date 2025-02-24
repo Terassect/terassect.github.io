@@ -86,13 +86,34 @@
 </style>
 
 <script>
-const socketette = new WebSocket("wss://192.168.1.4:8765");
+document.body.style.touchAction = "none";
+var sockette = new WebSocket("wss://192.168.1.4:8765");
 
-function logg (m)  {
-    if(socketette){
-        socketette.send(m);
-    }
+function logg (m,jsonStringify=false)  {
+  if(!sockette){return;}
+
+  if(jsonStringify){
+    sockette.send(JSON.stringify(m));
+  } else{
+    sockette.send(m)
+  }
+
 }
+var wakeLock;
+
+const testWakelock = async (e) => {
+
+  logg( "wake lock: " +  (("wakeLock" in navigator) ? "yes" : "no") ) 
+
+  wakeLock = navigator.wakeLock.request('screen');
+  logg("wakelock type:" + wakeLock.type,true);
+}
+sockette.onopen = (e) =>{
+  console.log("socket opened")
+  testWakelock();
+
+}
+
 </script>
 
 <script type="module">
@@ -105,7 +126,7 @@ import PianoKeyboard from "./cmaj_api/cmaj-piano-keyboard.js"
 customElements.define ("cmaj-panel-piano-keyboard", PianoKeyboard);
 
 let keyboard = null;
-console.log("TEST")
+
 function removePianoKeyboard (connection)
 {
     if (keyboard)

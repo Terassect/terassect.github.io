@@ -18,7 +18,7 @@ class PointerHandler extends HTMLElement{
     doubleDown(z){}
 
     singleUp(z,z0){}
-    singleDrag(z,z0){}
+    singleDrag(z,zPrev,z0){}
     singleDown(z){}
 
     convertToLocal(event){
@@ -37,44 +37,44 @@ class PointerHandler extends HTMLElement{
         s.left = "0px";
         s.top = "0px";
 
-        const rect = this.getBoundingClientRect();
-        const x0 = rect.left;
-        const y0 = rect.top;
-
         this.onpointerdown = (event) => {
             const e = this.convertToLocal(event)
             this.downs.push(e);
             this.heldCoords[e.id] = {x:e.x, y:e.y};
 
-
             if(this.downs.length == 1){
-                this.singleDown(this.downs[0])
                 this.clickTimeout = setTimeout(()=>{this.clickTimeout=null;},100)
-            }
+                this.singleDown(this.downs[0])
+            } 
+            // if (this.downs.length > 1 && this.clickTimeout){ this.clickTimeout = null;}
+
             if(this.downs.length == 2){this.doubleDown(this.downs[1])}
 
-            this.log("down"  );
+            this.log("down" + e.id  );
 
 
         }
 
         this.onpointerup = (event) => {
+            this.log("up")
             const e = this.convertToLocal(event)
             if(this.downs.length == 1){this.singleUp(e, this.downs[0])}
-            if(this.downs.length == 2){this.doubleUp(e, this.downs[0])}
-            this.log("up "+e.id.toString()+" " +JSON.stringify(this.downs))
-            this.downs = this.downs.filter(d => d.id != e.id);
-            this.log(
-                
-                e.id.toString()+" " +JSON.stringify(this.downs))
+            if(this.downs.length == 2){ this.doubleUp(e, this.downs[0]) }
 
+            this.log("\t"+e.id.toString()+" " +JSON.stringify(this.downs.map(d=>d.id)))
+            this.downs = this.downs.filter(d => d.id != e.id);
+            this.log( "\t" + e.id.toString()+" " +JSON.stringify(this.downs.map(d=>d.id)) )
+
+            if(this.downs.length == 0){this.log("\n")}
         }
 
-        // this.onpointerleave= (e)=>{this.onpointerup(e)}
+        this.onmouseleave = (e)=>{
+            this.log("leave\n")
+            this.onpointerup(e)
+        }
 
         this.onpointermove = (event) => {
             if(this.clickTimeout){return;}
-            this.log("move"  );
 
             const e = this.convertToLocal(event)
 

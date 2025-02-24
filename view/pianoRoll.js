@@ -209,12 +209,20 @@ class PianoRoll extends HTMLElement {
             return r
         }
 
+        this.pointerHandler.doubleUp = (z,z0) => {
+            // this.selectedNoteDeltas = [];
+            // var d0 = this.pointerHandler.downs[0]
+            // d0 ={ ...this.pointerHandler.heldCoords[d0.id], id:z.id};
+            // this.pointerHandler.downs[0] = d0;
+        }
+
         this.pointerHandler.doubleDrag = (z, zPrev) => {
+            if (this.currentOperation == "pencil") { this.currentOperation = "select"; }
 
             this.visibleTimeRange = pinchZoomPan(z, zPrev, 'x', this.xToTime.bind(this), this.pro.width)
             this.visibleNoteRange = pinchZoomPan(z, zPrev, 'y', this.yToNote.bind(this), this.pro.height)
 
-            this.visibleNoteRange = this.sanitizeRange(this.visibleNoteRange);
+            this.visibleNoteRange = this.sanitizeRange(this.visibleNoteRange, [0,127]);
             this.draw();
         }
 
@@ -330,7 +338,7 @@ class PianoRoll extends HTMLElement {
         }
 
         this.pointerHandler.singleUp = (z, z0) => {
-
+            logg(this.currentOperation)
             switch (this.currentOperation) {
                 case "pencil":
                     if( this.visibleNotePaths().every(path => this.proCtx.isPointInPath(path,z.x,z.y) == false ) ){
@@ -338,6 +346,8 @@ class PianoRoll extends HTMLElement {
                     }
                     break;
                 case "select":
+                    if(!this.selectionCorners){break;}
+                    // logg(this.selectionCorners,true)
                     const tr = this.sanitizeRange(this.selectionCorners.map(e=>e.t))
                     const nr = this.sanitizeRange(this.selectionCorners.map(e=>e.n))
                     this.selectedNoteIdxs = this.noteIdxsInRanges(tr, nr);
@@ -477,10 +487,14 @@ class PianoRoll extends HTMLElement {
         this.patternChanged();
     }
 
-    sanitizeRange(q) {
+    sanitizeRange(q,limits) {
         if (q[0] == q[1])
-            q[1] += 0.001;
+            q[1] += 0.00001;
         q = q.sort((a, b) => a - b);
+        if (limits){
+            q[0] = Math.max(q[0],limits[0])
+            q[1] = Math.min(q[1],limits[1])
+        }
         return q;
     }
     floor(x, a) { return Math.floor(x / a) * a; }
@@ -611,7 +625,7 @@ class PianoRoll extends HTMLElement {
             if (blackNotes.includes(i % 12)) { this.prCtx.fillRect(0, y, this.pr.width, yp1 - y); }
 
             //display octave number every C
-            if (i % 12 == 0) { this.prCtx.strokeText((Math.floor(i / 12) - 1).toString(), 0, y) }
+            if (i % 12 == 0) { this.prCtx.strokeText("C"+(Math.floor(i / 12) - 1).toString(), 0, y) }
 
             this.prCtx.beginPath();
             this.prCtx.moveTo(0, y);
