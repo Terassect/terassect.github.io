@@ -60,10 +60,9 @@ class PointerHandler extends HTMLElement{
             const e = this.convertToLocal(event)
             if(this.downs.length == 1){this.singleUp(e, this.downs[0])}
             if(this.downs.length == 2){ this.doubleUp(e, this.downs[0]) }
-
-            this.log("\t"+e.id.toString()+" " +JSON.stringify(this.downs.map(d=>d.id)))
+            this.log("\t" + e.id?.toString() + " " + JSON.stringify(this.downs.map(d=>d.id)))
             this.downs = this.downs.filter(d => d.id != e.id);
-            this.log( "\t" + e.id.toString()+" " +JSON.stringify(this.downs.map(d=>d.id)) )
+            this.log( "\t" + e.id?.toString()+" " +JSON.stringify(this.downs.map(d=>d.id)) )
 
             if(this.downs.length == 0){this.log("\n")}
         }

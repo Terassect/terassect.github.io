@@ -150,7 +150,6 @@ class PianoRoll extends HTMLElement {
             }
         }
 
-
         const turnOffToggles = () =>{
             moveButton.checked=false;
         }
@@ -170,22 +169,33 @@ class PianoRoll extends HTMLElement {
             this.pointerHandler = new PointerHandler();
             canvases.appendChild(this.pointerHandler);
         }
+        const setDims = () =>{
+            [this.pr, this.pro, this.pointerHandler].forEach(e => {
 
-        [this.pr, this.pro, this.pointerHandler].forEach(e => {
-            e.style.position = 'absolute'
-            e.style.border = "1px solid #000000";
+                e.style.position = 'absolute'
+                e.style.border = "1px solid #000000";
 
-            e.style.top = canvases.style.top;
-            e.style.left = canvases.style.left;
-            e.style.width = canvases.clientWidth.toString() * 0.99 + 'px';
-            e.style.height = canvases.clientHeight.toString() * 0.99 + 'px';
-            e.style.margin = '0px';
-            e.style.padding = '0px';
+                e.style.top = canvases.style.top;
+                e.style.left = canvases.style.left;
+                e.style.width = canvases.clientWidth.toString() * 0.99 + 'px';
+                e.style.height = canvases.clientHeight.toString() * 0.99 + 'px';
+                e.style.margin = '0px';
+                e.style.padding = '0px';
 
 
-            e.width = parseInt(e.style.width);
-            e.height = parseInt(e.style.height);
+                e.width = parseInt(e.style.width);
+                e.height = parseInt(e.style.height);
+            });
+        }
+        setDims();
+        screen.orientation.addEventListener('change', (e) => {
+            logg(JSON.stringify(e));
         });
+  
+        window.addEventListener('resize', (event) => {
+           setDims();
+           this.draw();
+        }, true);
 
         const pinchZoomPan = (z, zPrev, q, screenToLocalFn, screenMax) => {
             const l0 = screenToLocalFn(zPrev[0][q]);
@@ -347,7 +357,6 @@ class PianoRoll extends HTMLElement {
                     break;
                 case "select":
                     if(!this.selectionCorners){break;}
-                    // logg(this.selectionCorners,true)
                     const tr = this.sanitizeRange(this.selectionCorners.map(e=>e.t))
                     const nr = this.sanitizeRange(this.selectionCorners.map(e=>e.n))
                     this.selectedNoteIdxs = this.noteIdxsInRanges(tr, nr);
