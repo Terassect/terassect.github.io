@@ -26,7 +26,7 @@ class Riffagram_View extends HTMLElement
         this.style.width = "100%";
         this.style.height = "100%";
         this.style.padding = "0px";
-        this.style.margin = "0px";
+        this.style.margin = "1px";
         this.style.display = "grid";
         this.style.gridTemplateColumns = "1fr 9fr";
 
@@ -153,26 +153,8 @@ class Riffagram_View extends HTMLElement
     getHTML()
     {
         return `
-        <style>
-            .html{
-                width:100%; height:100%;
-                margin: 0; padding: 0;
-                background: #fff
-            }
-            .main-view-element {
-                background: #fff;
-                display: block;
-                width: 100%;
-                height: 100%;
-                padding: 0px;
-                overflow: auto;
-                opacity: 100%;
-            }
-            .SongParm{
-                width:100%;
-                height:10%
-            }
-        </style>
+        <link rel="stylesheet" href="./view/styles.css">
+
         <div id="buttons">
             <input type="button" class="SongParm" id="playButton" value="play"/>
             <input type="button" class="SongParm" id="stopButton" value="stop"/>

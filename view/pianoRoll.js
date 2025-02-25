@@ -66,6 +66,12 @@ class PianoRoll extends HTMLElement {
             this.log(e)
         }
 
+        if (!this.pointerHandler) {
+            customElements.define('pointer-handler', PointerHandler);
+            // this.pointerHandler = new PointerHandler();
+            // canvases.appendChild(this.pointerHandler);
+        }
+        this.id = "pianoRoll";
         this.style.width = "100%";
         this.style.height = "100%";
         this.style.padding = "0px";
@@ -77,23 +83,22 @@ class PianoRoll extends HTMLElement {
         // customElements.define('pointer-handler',PointerHandler);
 
         this.innerHTML = `
-        <style>
-            #moveButton:active{
-                background: transparent;
-            }
-        </style>
+
         <div id="buttons">
-            <input id="deleteButton" type="button" value="del" />
-            <input id="duplicateButton" type="button" value="dupe" />
-            <input id="moveButton" type="button" value="Move" />
+            <input id="deleteButton" class="prButton" type="button" value="del" />
+            <input id="duplicateButton" class="prButton" type="button" value="dupe" />
+            <input id="moveButton" class="prButton" type="button" value="Move" />
 
         </div>
         <div id="canvases">
             <meta id="Deleting this will break things" />
             <canvas id="pianoRollCa"></canvas>
             <canvas id="pianoRollOverlay"></canvas>
+            <pointer-handler id="pointerHandler" />
         </div>
     `;
+
+        this.pointerHandler = this.querySelector("#pointerHandler")
 
         var moveButton = this.querySelector("#moveButton");
         var moveButtonAnimation = moveButton.animate([{background:"yellow"},{background:"red"},{background:"yellow"}] , {duration:1000, iterations:"Infinity"})
@@ -110,13 +115,6 @@ class PianoRoll extends HTMLElement {
         moveButton.checked=true;
         moveButton.onclick();
 
-
-        for (const button of this.querySelector('#buttons').children) {
-            button.style.width = "100%";
-            button.style.height = "25%";
-            button.style.visibility = "hidden";
-        }
-
         var deleteButton = this.querySelector("#deleteButton");
         deleteButton.onclick = (e) => {
             turnOffToggles();
@@ -124,6 +122,7 @@ class PianoRoll extends HTMLElement {
             this.removeNotes(this.selectedNoteIdxs)
             this.selectedNoteIdxs = [];
             this.currentOperation = "pencil";
+            if(moveButton.checked){moveButton.click();}
             this.draw();
         }
 
@@ -154,7 +153,7 @@ class PianoRoll extends HTMLElement {
             moveButton.checked=false;
         }
 
-        var canvases = this.querySelector('#canvases')
+        var canvases = this.querySelector('#canvases');
         canvases.style.width = "100%";
         canvases.style.height = "100%";
 
@@ -164,24 +163,19 @@ class PianoRoll extends HTMLElement {
         this.prCtx = this.pr.getContext("2d");
         this.proCtx = this.pro.getContext("2d");
 
-        if (!this.pointerHandler) {
-            customElements.define('pointer-handler', PointerHandler);
-            this.pointerHandler = new PointerHandler();
-            canvases.appendChild(this.pointerHandler);
-        }
+
         const setDims = () =>{
+            console.log(canvases.clientWidth,canvases.clientHeight);
+
             [this.pr, this.pro, this.pointerHandler].forEach(e => {
-
                 e.style.position = 'absolute'
-                e.style.border = "1px solid #000000";
-
                 e.style.top = canvases.style.top;
                 e.style.left = canvases.style.left;
+                e.style.border = "1px solid #000000";
                 e.style.width = canvases.clientWidth.toString() * 0.99 + 'px';
                 e.style.height = canvases.clientHeight.toString() * 0.99 + 'px';
                 e.style.margin = '0px';
                 e.style.padding = '0px';
-
 
                 e.width = parseInt(e.style.width);
                 e.height = parseInt(e.style.height);
@@ -191,7 +185,7 @@ class PianoRoll extends HTMLElement {
         screen.orientation.addEventListener('change', (e) => {
             logg(JSON.stringify(e));
         });
-  
+        
         window.addEventListener('resize', (event) => {
            setDims();
            this.draw();
@@ -390,7 +384,9 @@ class PianoRoll extends HTMLElement {
                     this.proCtx.fillStyle = this.colors.noteH
                     this.proCtx.fill(path);
                 }
-            })
+            });
+            // if(e.button)
+
         }
 
         this.draw();
@@ -778,50 +774,50 @@ class PianoRoll extends HTMLElement {
         this.selectionCorners = null;
     }
 
-    // pan(e){
-    //     var dx = -e.movementX*( this.visibleTimeRange[1] - this.visibleTimeRange[0])/this.pr.width;
-    //     this.visibleTimeRange[0] += dx;
-    //     this.visibleTimeRange[1] += dx;
+    pan(e){
+        var dx = -e.movementX*( this.visibleTimeRange[1] - this.visibleTimeRange[0])/this.pr.width;
+        this.visibleTimeRange[0] += dx;
+        this.visibleTimeRange[1] += dx;
 
-    //     var dy = e.movementY*(this.visibleNoteRange[1]-this.visibleNoteRange[0])/this.pr.height;
+        var dy = e.movementY*(this.visibleNoteRange[1]-this.visibleNoteRange[0])/this.pr.height;
 
-    //     this.visibleNoteRange[0] += dy;
-    //     this.visibleNoteRange[1] += dy;
+        this.visibleNoteRange[0] += dy;
+        this.visibleNoteRange[1] += dy;
 
-    //     this.draw();
-    // }
+        this.draw();
+    }
 
-    // zoom(e){
-    //     var dy = Math.pow(1.011,e.movementY);
+    zoom(e){
+        var dy = Math.pow(1.011,e.movementY);
 
-    //     // console.log(dy);
-    //     const x = this.mouseEventToCanvasCoords(e)[0];
-    //     const t = this.xToTime(x);
+        // console.log(dy);
+        const x = this.mouseEventToCanvasCoords(e)[0];
+        const t = this.xToTime(x);
 
-    //     // visibleTimeRange[0] = dx;
-    //     this.visibleTimeRange[0] = t + (this.visibleTimeRange[0]-t)*dy;
-    //     this.visibleTimeRange[1] = t + (this.visibleTimeRange[1]-t)*dy;
+        // visibleTimeRange[0] = dx;
+        this.visibleTimeRange[0] = t + (this.visibleTimeRange[0]-t)*dy;
+        this.visibleTimeRange[1] = t + (this.visibleTimeRange[1]-t)*dy;
 
-    //      var dx = e.movementX;
+         var dx = e.movementX;
 
 
-    //     if(dx > 5 || dx < -5  ){
-    //         this.visibleNoteRange[0] += Math.sign(dx);
-    //         this.visibleNoteRange[1] -= Math.sign(dx);
-    //     }
-    //     if ( this.visibleNoteRange[1] <= this.visibleNoteRange[0]){
-    //         this.visibleNoteRange[0] -= 1;
-    //         this.visibleNoteRange[1] += 1;
-    //     }
+        if(dx > 5 || dx < -5  ){
+            this.visibleNoteRange[0] += Math.sign(dx);
+            this.visibleNoteRange[1] -= Math.sign(dx);
+        }
+        if ( this.visibleNoteRange[1] <= this.visibleNoteRange[0]){
+            this.visibleNoteRange[0] -= 1;
+            this.visibleNoteRange[1] += 1;
+        }
 
-    //     [0,1].forEach( i => {
-    //         if( this.visibleNoteRange[i] > 127 ) {this.visibleNoteRange[i]=127;}
-    //         if( this.visibleNoteRange[i] < 0   ) {this.visibleNoteRange[i]=0;}
-    //     })
+        [0,1].forEach( i => {
+            if( this.visibleNoteRange[i] > 127 ) {this.visibleNoteRange[i]=127;}
+            if( this.visibleNoteRange[i] < 0   ) {this.visibleNoteRange[i]=0;}
+        })
 
-    //     // console.log(visibleNoteRange)
-    //     this.draw();
-    // }
+        // console.log(visibleNoteRange)
+        this.draw();
+    }
 
 } ///HTMLElement
 
