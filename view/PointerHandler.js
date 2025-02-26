@@ -52,7 +52,6 @@ class PointerHandler extends HTMLElement{
 
             this.log("down" + e.id  );
 
-
         }
 
         this.onpointerup = (event) => {

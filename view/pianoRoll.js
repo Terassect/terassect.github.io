@@ -84,7 +84,7 @@ class PianoRoll extends HTMLElement {
 
         this.innerHTML = `
 
-        <div id="buttons">
+        <div id="patternButtons">
             <input id="deleteButton" class="prButton" type="button" value="del" />
             <input id="duplicateButton" class="prButton" type="button" value="dupe" />
             <input id="moveButton" class="prButton" type="button" value="Move" />
@@ -142,9 +142,8 @@ class PianoRoll extends HTMLElement {
             this.timeSelection[1] += Dt;
         }
 
-
         const setButtonsVisibility = (shouldSee) => {
-            for (const button of this.querySelector('#buttons').children) {
+            for (const button of this.querySelector('#patternButtons').children) {
                 button.style.visibility = shouldSee ? "visible" : "hidden";
             }
         }
@@ -154,8 +153,7 @@ class PianoRoll extends HTMLElement {
         }
 
         var canvases = this.querySelector('#canvases');
-        canvases.style.width = "100%";
-        canvases.style.height = "100%";
+
 
         this.pr = this.querySelector('#pianoRollCa');
         this.pro = this.querySelector('#pianoRollOverlay');
@@ -168,20 +166,31 @@ class PianoRoll extends HTMLElement {
             console.log(canvases.clientWidth,canvases.clientHeight);
 
             [this.pr, this.pro, this.pointerHandler].forEach(e => {
-                e.style.position = 'absolute'
-                e.style.top = canvases.style.top;
-                e.style.left = canvases.style.left;
-                e.style.border = "1px solid #000000";
-                e.style.width = canvases.clientWidth.toString() * 0.99 + 'px';
-                e.style.height = canvases.clientHeight.toString() * 0.99 + 'px';
-                e.style.margin = '0px';
-                e.style.padding = '0px';
+                var s = e.style;
+                // s.position
+                s.position = 'absolute'
+                // s.top = canvases.style.top;
+                // s.left = canvases.style.left;
+                s.top = "0px";
+                s.left = "0px";
+                s.width="100%";
+                s.height="100%";
+                // s.width = canvases.style.width;
+                // s.height = canvases.style.height;
 
-                e.width = parseInt(e.style.width);
-                e.height = parseInt(e.style.height);
+
             });
+            [this.pr, this.pro].forEach(e => {
+
+                e.width = canvases.clientWidth;
+                e.height = canvases.clientHeight;
+            })
+            this.draw();
+            console.log(canvases);
         }
         setDims();
+        setTimeout(setDims,100);
+
         screen.orientation.addEventListener('change', (e) => {
             logg(JSON.stringify(e));
         });

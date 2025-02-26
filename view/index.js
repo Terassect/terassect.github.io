@@ -23,10 +23,8 @@ class Riffagram_View extends HTMLElement
     {
         document.addEventListener('contextmenu', function(event) { event.preventDefault(); });
 
-        this.style.width = "100%";
-        this.style.height = "100%";
-        this.style.padding = "0px";
-        this.style.margin = "1px";
+        // this.style.width = "100%";
+        // this.style.height = "100%";
         this.style.display = "grid";
         this.style.gridTemplateColumns = "1fr 9fr";
 
@@ -140,6 +138,10 @@ class Riffagram_View extends HTMLElement
 
 
         while(this.pianoRoll.connectedCallbackFinished == false){}
+
+        this.patchConnection.sendEventOrValue('stop',[]);
+
+
         getPatternFromURL();
     }
 
@@ -155,10 +157,11 @@ class Riffagram_View extends HTMLElement
         return `
         <link rel="stylesheet" href="./view/styles.css">
 
-        <div id="buttons">
-            <input type="button" class="SongParm" id="playButton" value="play"/>
-            <input type="button" class="SongParm" id="stopButton" value="stop"/>
-            <input type="number" class="SongParm" id="tempoInput" value="120"/>
+
+        <div id="songParms" >
+            <input type="button" class="song-parm" id="playButton" value="play"/>
+            <input type="button" class="song-parm" id="stopButton" value="stop"/>
+            <input type="number" class="song-parm" id="tempoInput" value="120"/>
         </div>
 
         `;

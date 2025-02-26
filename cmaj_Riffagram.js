@@ -41,8 +41,8 @@ export const manifest =
   ],
   "view": {
     "src": "view/index.js",
-    "width": 600,
-    "height": 400,
+    // "width": 600,
+    // "height": 400,
     "resizable": true
   }
 };
