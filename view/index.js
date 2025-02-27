@@ -97,7 +97,6 @@ class Riffagram_View extends HTMLElement
             this.patchConnection.sendEventOrValue('tempoIn', this.querySelector("#tempoInput").value);
         }
 
-
         const postStateToUrl = (pattern) => {
             var extras = {
                 tempo: this.querySelector("#tempoInput").value

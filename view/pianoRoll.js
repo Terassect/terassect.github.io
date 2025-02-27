@@ -117,12 +117,13 @@ class PianoRoll extends HTMLElement {
 
         var deleteButton = this.querySelector("#deleteButton");
         deleteButton.onclick = (e) => {
+            if(moveButton.checked){moveButton.click();}
+
             turnOffToggles();
             setButtonsVisibility(false);
             this.removeNotes(this.selectedNoteIdxs)
             this.selectedNoteIdxs = [];
             this.currentOperation = "pencil";
-            if(moveButton.checked){moveButton.click();}
             this.draw();
         }
 

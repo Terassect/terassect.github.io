@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Cmajor Patch</title>
+  <title>Riffagram</title>
 </head>
 
 <body>
@@ -9,7 +9,12 @@
     <div id="cmaj-overlay">
       <div id="cmaj-info">
         <h1>Riffagram</h1>
-        <span>- Click to Start -</span>
+        <div id="instructions" style="padding:1em">
+          <p>Click to draw notes</p>
+          <p>One finger drag to select notes</p>
+          <p>Two finger drag to zoom/pan</p>
+        </div>
+
       </div>
     </div>
 </body>
@@ -33,6 +38,14 @@
       cursor: pointer;
       background: rgb(0,0,0,0.6);
       z-index: 10;
+    }
+    
+    #cmaj-info{
+      height: auto;
+      text-align: center;
+      top:50%;
+      position: absolute;
+      transform: translateY(-50%);
     }
 
     body{
