@@ -90,7 +90,6 @@ class Riffagram_View extends HTMLElement
 
         this.querySelector('#stopButton').onclick = (e) => {
             this.patchConnection.sendEventOrValue('stop',[]);
-            getStateFromUrl();
         }
 
         this.querySelector("#tempoInput").onchange = (e) => {
