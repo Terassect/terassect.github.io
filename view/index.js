@@ -171,7 +171,7 @@ class Riffagram_View extends HTMLElement
     getHTML()
     {
         return `
-        <link rel="stylesheet" href="./view/styles.css">
+        <link rel="stylesheet" href="./styles.css">
 
         <div id="songParms" >
             <input type="button" class="song-parm" id="playButton" value="play"/>

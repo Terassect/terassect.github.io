@@ -87,6 +87,7 @@ class PointerHandler extends HTMLElement{
                 this.doubleDrag(h,hPrev);
             }
         }
+
         console.log("PointerHandler connected" )
     }
 }
