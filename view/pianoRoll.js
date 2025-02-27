@@ -165,12 +165,6 @@ class PianoRoll extends HTMLElement {
         const setDims = () =>{
             console.log(canvases.clientWidth,canvases.clientHeight);
 
-            // [this.pr, this.pro, this.pointerHandler].forEach(e => {
-            //     var s = e.style;
-            //     s.position = 'absolute'
-
-            // });
-
             [this.pr, this.pro].forEach(e => {
 
                 e.width = e.clientWidth;

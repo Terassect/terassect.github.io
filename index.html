@@ -9,15 +9,12 @@
     <div id="cmaj-overlay">
       <div id="cmaj-info">
         <h1>Riffagram</h1>
-        <p>- Click to Start -</p>
+        <span>- Click to Start -</span>
       </div>
     </div>
 </body>
 
 <style>
-    html { background: black; overflow: clip; }
-    body { position: absolute; width: 100%; height: 100%; top:0px; left:0px; margin:0px;}
-
     #cmaj-view-container {
       display: block;
       position: absolute;
@@ -28,27 +25,23 @@
     }
 
     #cmaj-overlay { 
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    cursor: pointer;
-                    background: rgb(0,0,0,0.6);
-                    z-index: 10;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      background: rgb(0,0,0,0.6);
+      z-index: 10;
     }
 
-
-    #cmaj-info { display: flex; flex-direction: column; justify-content: center; align-items: center; flex-grow: 1; }
+    body{
+      touch-action: none;
+    }
 
 </style>
 
 <script>
-document.body.style.touchAction = "none";
 var sockette = new WebSocket("wss://192.168.1.4:8765");
 
 function logg (m,jsonStringify=false)  {
@@ -64,33 +57,22 @@ function logg (m,jsonStringify=false)  {
 var wakeLock;
 
 const testWakelock = async (e) => {
-
   logg( "wake lock: " +  (("wakeLock" in navigator) ? "yes" : "no") ) 
-
   wakeLock = navigator.wakeLock.request('screen');
   logg("wakelock type:" + wakeLock.type,true);
 }
+
 sockette.onopen = (e) =>{
   console.log("socket opened")
   testWakelock();
-
 }
 
 </script>
 
 <script type="module">
 
-
 import * as patch from "./cmaj_Riffagram.js"
 import { createPatchViewHolder } from "./cmaj_api/cmaj-patch-view.js"
-
-
-function getMIDIInputEndpointID (connection)
-{
-    for (const i of connection.inputEndpoints)
-        if (i.purpose === "midi in")
-            return i.endpointID;
-}
 
 //==============================================================================
 async function loadPatch()
@@ -109,8 +91,7 @@ async function loadPatch()
     if (view)
         viewContainer.appendChild (view);
 
-    startOverlay.onclick = () =>
-    {
+    startOverlay.onclick = () => {
         startOverlay.style.display = "none";
         connection.connectDefaultAudioAndMIDI (audioContext);
         audioContext.resume();

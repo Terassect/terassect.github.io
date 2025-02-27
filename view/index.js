@@ -1,8 +1,9 @@
-
-
 import PianoRoll from './pianoRoll.js'
 import JSONCrush from './JSONCrush.js';
 
+const defaults = {
+    tempo:120
+}
 
 class Riffagram_View extends HTMLElement
 {
@@ -93,15 +94,23 @@ class Riffagram_View extends HTMLElement
         }
 
         this.querySelector("#tempoInput").onchange = (e) => {
+            console.log("tempo changed");
             this.patchConnection.sendEventOrValue('tempoIn', this.querySelector("#tempoInput").value);
         }
 
 
         const postPatternToURL = (pattern) => {
-            const un = JSON.stringify(pattern)
+            var extras = {
+                tempo: this.querySelector("#tempoInput").value
+            }
+            console.log("extras: ",extras);
 
+            const un = JSON.stringify({...pattern,...extras})
+            console.log("json len: ", un.length);
             var url = JSONCrush.crush(un)
             url = encodeURIComponent(url);
+            console.log("crushed len: ", url.length);
+
             sessionStorage.setItem("path",url);
             url = window.location.origin + "/" +url;
 
@@ -116,6 +125,10 @@ class Riffagram_View extends HTMLElement
                 this.pianoRoll.setPattern(pattern);
 
                 this.pianoRoll.draw();
+                console.log("recovered tempo: " ,pattern.tempo);
+
+                this.querySelector("#tempoInput").value = pattern.tempo ? pattern.tempo: defaults.tempo ;
+                this.querySelector("#tempoInput").onchange();
             } catch (error) {
             }
         }
@@ -156,7 +169,6 @@ class Riffagram_View extends HTMLElement
     {
         return `
         <link rel="stylesheet" href="./view/styles.css">
-
 
         <div id="songParms" >
             <input type="button" class="song-parm" id="playButton" value="play"/>
