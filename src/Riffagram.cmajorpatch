@@ -1,0 +1,23 @@
+
+{
+    "CmajorVersion":    1,
+    "ID":               "com.your_name.your_patch_ID",
+    "version":          "1.0",
+    "name":             "Riffagram",
+    "description":      "Riffagram",
+    "category":         "generator",
+    "manufacturer":     "Terassect",
+    "isInstrument":     true,
+
+    "source":           ["Riffagram.cmajor",
+                        "extra_Midi.cmajor",
+                        "extra_Utilities.cmajor",
+                        "extra_ADSR.cmajor",
+                        "extra_Oscillators.cmajor",
+                        "extra_Waveshaper.cmajor",
+                        "PolySynth.cmajor"],
+
+
+    "view":             { "src": "../view/index.js",
+                          "resizable": true }
+}

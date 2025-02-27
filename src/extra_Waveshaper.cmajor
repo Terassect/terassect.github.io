@@ -1,0 +1,161 @@
+/*
+Waveshapers of both the static and dynamic variety
+*/
+namespace extra::waveshaper
+{
+
+T clamp<T>( T x , T lowerLimit, T upperLimit)
+{
+    if const (x.isVector)
+    {
+        for( wrap<x.size> i=0 )
+        {
+            x[i] = std::intrinsics::clamp(x[i], lowerLimit[i] , upperLimit[i]);
+        }
+    }
+    else
+    {
+        x = std::intrinsics::clamp(x,lowerLimit,upperLimit);
+    }
+
+    return x;
+} 
+
+T firmClip<T>( T x, int evenNumber)
+{
+    var e = T(evenNumber);
+    return x*(1+x**e)**T(-1/e);
+}
+
+//Was getting internal compiler error when using firmClip on vectors
+T firmClipVec<T>( T x , int evenNumber)
+{
+    for( wrap<x.size> i )
+    {
+        x[i] = firmClip(x[i],evenNumber);
+    }
+    return x;
+} 
+
+//Simplified, analog-inspired low pass filter with saturation
+//Done with lookup table for extra cpu efficiency
+processor TanhLowPass (using FrameType = float)
+{
+    input stream FrameType in;
+    output stream FrameType out;
+
+    input stream float coeffExp0to1;
+
+    using T = FrameType.isVector ? FrameType.elementType : FrameType;
+    
+    // using Table = extra::lookuptable( T, T, 128, T(-4), T(4) )::Table;
+    
+    // Table calcTanhTable()
+    // {
+    //     Table tanch;
+    //     for(int i=0;i< tanch.table.size ;i++)
+    //         tanch.set(i , std::intrinsics::tanh( tanch.indexToX(i) ) );
+    //     return tanch;
+    // }
+
+    // Table tanhLUT = calcTanhTable();
+
+    FrameType y;
+
+    void main()
+    {
+        loop
+        {
+            T coeff = pow(T(1000) , T(coeffExp0to1) - T(1) );
+            y += (in - y)*coeff;
+            // y = tanhLUT.get(y);
+            y = tanh(y);
+
+            out <- y;
+
+            advance();
+        }
+    }
+}
+
+//Virtual analog, TPT, ladder filter stage
+processor SingleLadderStage(using FrameType = float, using InternalType=float64 , bool showConverganceStats = false)
+{
+    input stream FrameType in;
+    output stream FrameType out;
+
+    input stream float controlVoltage0to1; //exponential
+    input stream float current0to1; // linear
+
+    using T = InternalType.isVector ? InternalType.elementType : InternalType;
+
+    var k = T(0.00);
+    let dt = T(processor.period);
+    let C = T(10e-6);//T(1e-6);
+    var ic = T(1e-3); 
+    var x = InternalType( 0. );
+    var Vout= InternalType(0.);
+    var integrand = InternalType(0);
+
+    let maxNumIter=32;
+    float64 tolerance = float64(1e-6);
+    
+    wrap<8192> counter;
+    float64 avgIter;
+    int worstCase =0;
+
+    InternalType fOverFPrime( InternalType vo, InternalType vi )
+    {
+        integrand = ic*(tanh(-vi) + tanh(vo));
+        return (C*vo + dt*InternalType(integrand*0.5 + x))/(C + T(0.5)*ic*dt/pow(cosh(vo), InternalType(2)));
+    }
+
+    void main()
+    {
+        loop
+        {
+            var Vin = InternalType(in);
+            ic = pow(T(1000) , T(controlVoltage0to1)-T(1.)) + T(current0to1);
+            //ic = clamp(ic, T(0.001), T(1)); // compiler says ambiguous call?
+            ic = min(ic,T(2));
+            ic = max(ic,T(0));
+            int i = 0;
+            loop(maxNumIter)
+            {
+                var delta = fOverFPrime(Vout,Vin) ;
+
+                delta = waveshaper::clamp( delta, InternalType(-1.), InternalType(1.) ) ;
+                Vout -= delta;
+                
+                i++;
+
+                bool isConverged = anyTrue( abs(delta) < tolerance );
+
+                if( isConverged )
+                    break;
+            }
+
+            if const (showConverganceStats)
+            {
+                worstCase = i>worstCase ? i :worstCase;
+                avgIter += (i-avgIter)*0.0001;
+                if(++counter == 0) 
+                {
+                    console <- avgIter <- "\t" <- worstCase <- "\n";
+                    worstCase=0;
+                }
+            }
+
+
+            x += integrand;
+            x *= InternalType(0.9999);
+
+            out <- FrameType(Vout);
+
+            advance();
+        }
+    }
+}
+
+}///namepace extra::waveshaper
+

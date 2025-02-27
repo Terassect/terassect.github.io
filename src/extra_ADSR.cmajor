@@ -1,0 +1,110 @@
+namespace extra
+{
+/*
+Standard exponential, analog-inspired ADSR envelope generator with optional looping
+For input, use either std::midi::Message or the output of std::midi::MPEConverter as used by std::envelopes::FixedASR
+*/
+processor ADSR(using T=float, T initAttackMilliSeconds=10, T initDecayMilliSeconds = 100 , T initSustain = 0.5, T initReleaseMilliSeconds = 200 )
+{
+    input event (std::notes::NoteOn, std::notes::NoteOff) eventIn;
+    input event std::midi::Message midiIn;
+    input event void retrig;
+    input event T attackIn[[name:"Attack ms" , min:.1 , max: 100 , init: 1 , log:true]];
+    input event T decayIn[[name:"Decay ms" , min:.1 , max: 400 , init: 100 , log:true]];
+    input event T sustainIn[[name:"Sustain" , min:0 , max: 1, init: 0.5 , log:true]];
+    input event T releaseIn[[name:"Release ms" , min:.1 , max: 1000 , init: 1 , log:true]];
+    input value bool looping[[name:"Looping" , init:false]];
+    output stream T out;
+    output event void trig;
+
+    event attackIn  (T e) { A = calcAttackCoeff(e); }
+    event decayIn   (T e) { decayTimeMs = e; D = calcDecayCoeff(e); }
+    event sustainIn (T e) { S = e;           D = calcDecayCoeff(decayTimeMs);}
+    event releaseIn (T e) { R = calcReleaseCoeff(e); }
+
+    T msToSamples(T timeMs) {return T(timeMs/1000.*processor.frequency);}
+
+    let sustainMultDecayTarget = T(0.9);
+
+    T calcAttackCoeff(T timeMs)  { let t = msToSamples(timeMs); return T(1) - pow(T(3),-1/t);}
+    T calcDecayCoeff(T timeMs)   { let t = msToSamples(timeMs); return T(1) - T(S*(sustainMultDecayTarget-1)/(S*sustainMultDecayTarget-1))**(1/t); }
+    T calcReleaseCoeff(T timeMs) { let t = msToSamples(timeMs); return T(1) - exp(-1/t); }
+
+    T decayTimeMs = initDecayMilliSeconds;
+
+    T A = calcAttackCoeff(initAttackMilliSeconds);
+    T D = calcDecayCoeff(initDecayMilliSeconds);
+    T S = initSustain;
+    T R = calcReleaseCoeff(initReleaseMilliSeconds);
+
+    T state=0;
+
+    bool isInAttackPhase = true;
+    int numHeldNotes=0;
+
+    event retrig()
+    {
+        isInAttackPhase = true;
+        trig <- void;
+    }
+
+    event midiIn(std::midi::Message e)
+    {
+        if(e.isNoteOn())
+            noteOn();
+        else if (e.isNoteOff())
+            noteOff();
+    }
+    
+    event eventIn(std::notes::NoteOn e)  {  noteOn(); }
+    event eventIn(std::notes::NoteOff e) { noteOff();  }
+
+    void noteOn()
+    {
+        if(numHeldNotes==0)
+        {
+            isInAttackPhase = true;
+            trig <- void;
+        }
+
+        numHeldNotes++;
+    }
+
+    void noteOff()
+    {
+        numHeldNotes = max(0,numHeldNotes-1);
+    }
+
+    void main()
+    {
+        //looping <- initLooping ;
+        loop
+        {
+            if(numHeldNotes > 0)
+            {
+                if(isInAttackPhase)
+                {
+                    state += (T(1.5)-state)*A;
+                }
+                else
+                {
+                    state += (T(0.99)*S-state)*D;
+                    if(looping && state<=S)
+                        isInAttackPhase = true;
+                    state = max(state, S);
+                }
+            }
+            else
+                state += (0-state)*R;
+
+            if(state >= 1. )
+                isInAttackPhase=false;
+            
+            out <- state;
+            advance();
+        }
+    }
+
+}
+
+} // namespace extra

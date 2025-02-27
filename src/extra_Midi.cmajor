@@ -1,0 +1,222 @@
+namespace extra::midi
+{
+
+/*
+inputting a LenghtedMidiMessage will cause this to output a noteOn message and
+then, automatically, some time later, a corresponding noteOff message
+Handy for sequencers, arpeggiators, etc
+*/
+processor LengthedMidiMessager 
+{
+    input event LengthedMidiMessage midiIn;
+    output event std::midi::Message midiOut;
+
+    let maxNumMessages = 32;
+    namespace LMMArray = DynamicArray(LengthedMidiMessage,maxNumMessages);
+    LMMArray::Array lengthedMidiMessages;
+
+    event midiIn (LengthedMidiMessage e)
+    {
+        midiOut <- e.message;
+        lengthedMidiMessages.push(e);
+    }
+
+    void main()
+    {
+        loop
+        {
+            for(clamp<maxNumMessages> i=0; i<lengthedMidiMessages.length ; i++)
+            {
+                --lengthedMidiMessages.arr[i].length;
+                var m = lengthedMidiMessages.arr[i];
+                if( m.length <= 0)
+                {
+                    if( m.offMessage.message>0)
+                    {
+                        midiOut <- m.offMessage;
+                    }
+                    else if( m.message.isNoteOn() )
+                    {
+                        midiOut <- noteOnToOff(m.message);
+                    }
+                    lengthedMidiMessages.remove(i);
+                    i--;
+                }
+
+            }
+
+            advance();
+        }
+    }
+}
+
+/*
+Variable delay buffer for midi notes
+Input a DelayedMidiEvent and after the given time, this will output the given midi message.
+See MidiRandomDelay example
+*/
+processor MidiDelay (int maxNumDelayedNotes = 64)
+{
+    input event DelayedMidiEvent midiIn;
+    output event std::midi::Message midiOut;
+
+    struct HeldNote
+    {
+        int noteNumber;
+        int64 timeSinceStarted;
+    }
+
+    namespace DMEArray = DynamicArray(DelayedMidiEvent,maxNumDelayedNotes);
+    DMEArray::Array delayedMidiEvents;
+
+    event midiIn(DelayedMidiEvent e)
+    {
+        delayedMidiEvents.push(e);
+    }
+
+    void main()
+    {
+        loop
+        {
+            for( wrap<maxNumDelayedNotes> i=0; i<delayedMidiEvents.length ; i++ )
+            {
+                if(--delayedMidiEvents.arr[i].delayTimeSamples <=  0)
+                {
+                    midiOut <- delayedMidiEvents.arr[i].message;
+                    delayedMidiEvents.remove(i);
+                    i--;
+                }
+            }
+
+            advance();
+        }
+    }
+}
+
+struct LengthedMidiMessage
+{
+    std::midi::Message message;
+    int64 length;
+    std::midi::Message offMessage;
+}
+
+struct DelayedMidiEvent
+{
+    std::midi::Message message;
+    int64 delayTimeSamples;
+    int64 timeRemainingSamples;
+}
+
+LengthedMidiMessage createLengthedNote( std::midi::Message noteMessage , int64 lengthSamples )
+{
+    return LengthedMidiMessage( noteMessage, lengthSamples, std::midi::Message(0) );
+}
+
+LengthedMidiMessage createLengthedNote( int channel , int note ,int velocity, int64 lengthSamples )
+{
+    LengthedMidiMessage lmm;
+    lmm.message = std::midi::createMessage(143+channel , note , velocity );
+    lmm.length = lengthSamples;
+    return lmm;
+}
+
+DelayedMidiEvent createDelayedMessage(std::midi::Message message, int64 delayTimeSamples)
+{
+    DelayedMidiEvent dmm;
+    dmm.message = message;
+    dmm.delayTimeSamples = delayTimeSamples;
+    dmm.timeRemainingSamples = delayTimeSamples;
+    return dmm;
+}
+
+std::midi::Message shiftPitch(std::midi::Message message , int shift)
+{
+    return std::midi::createMessage(
+        message.getByte1(),
+        message.getByte2()+shift,
+        message.getByte3()
+	);
+}
+
+std::midi::Message withVelocity(std::midi::Message message , int velocity)
+{
+    return std::midi::createMessage(
+        message.getByte1(),
+        message.getByte2(),
+        velocity
+	);
+}
+
+std::midi::Message noteOnToOff(std::midi::Message message )
+{
+    return std::midi::createMessage(
+        message.getByte1()-16,
+        message.getByte2(),
+        message.getByte3()
+	);
+}
+
+/*
+Input midi into midiIn and use .heldNotes.get(idx) and .heldNotes.length to see what
+notes are Being held. 
+*/
+struct NoteHolder
+{
+    extra::DynamicArray(std::midi::Message,64)::Array heldNotes;
+
+    int idxOfMessageWithNoteNumber(int noteNumber)
+    {
+        for(int i=0;i<this.heldNotes.length;i++)
+        {
+            if(  noteNumber == this.heldNotes.get(i).getNoteNumber() )
+                return i;
+        }
+
+        return -1;
+    }
+
+    void midiIn(std::midi::Message e)
+    {
+        if(e.isNoteOn())
+        {
+            if( this.idxOfMessageWithNoteNumber(e.getNoteNumber()) == -1)
+                this.heldNotes.push(e);
+        }
+
+        if(e.isNoteOff())
+        {
+            int idx = this.idxOfMessageWithNoteNumber(e.getNoteNumber());
+            if(idx != -1)
+                this.heldNotes.remove(idx);
+        }
+    }
+}
+
+/*
+Note priority like what would be used in a monophonic synth
+Press one note, then another. Release the second note and this will output the first note, 
+in addition to the notes when they are initially pressed.
+See MonoSynth example
+*/
+processor MonoNotePriority (int maxNumHeldNotes=16)
+{
+    input event std::midi::Message midiIn;
+    output event int noteOut;
+
+    extra::DynamicArray(int,maxNumHeldNotes)::Array heldNotes;
+
+    NoteHolder noteHolder;
+
+    event midiIn(std::midi::Message e)
+    {
+        noteHolder.midiIn(e);
+
+        if(e.isNoteOn())
+            noteOut <- e.getNoteNumber();
+        
+        if(e.isNoteOff() && noteHolder.heldNotes.length>0)
+            noteOut <- noteHolder.heldNotes.get(-1).getNoteNumber();
+    }
+}
+
+}//namespace extra::midi

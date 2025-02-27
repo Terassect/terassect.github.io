@@ -1,0 +1,416 @@
+graph Riffagram [[main]]
+{
+    input patternPlayer.start;
+    input patternPlayer.stop;
+    input patternPlayer.tempoIn;
+
+    input synth.cutoff;
+    input synth.resonance;
+
+
+    output stream float out;
+    output event std::midi::Message midiOut;
+
+    ///From/to gui
+    input event pattern::PatternMetadata patternIn;
+    input event pattern::Note[2] noteIn;
+    output event float64 patternTimeOut;
+
+    node
+    {
+        playhead = PlayHead;
+        patternPlayer = pattern::PatternPlayer ;
+        synth = PolySynth;
+    }
+
+    connection
+    {
+        playhead.beatOut -> patternPlayer.beatIn;
+        
+        patternPlayer.patternTimeOut -> patternTimeOut;
+        patternIn -> patternPlayer.patternIn;
+        noteIn -> patternPlayer.noteIn;
+
+        patternPlayer.midiOut -> synth.midiIn; 
+        synth.out->out;
+    }
+}
+
+processor PlayHead (int reportingPeriodFrames = 44100/30 , float initTempo = 120. )
+{
+    input event
+    {
+        float64                          beatIn;
+        float64                          jumpIn;
+        std::timeline::Tempo             tempoIn;
+        std::timeline::TransportState    transportStateIn;
+        std::timeline::Position          positionIn;
+        std::timeline::TimeSignature     timeSignatureIn;
+    }
+    output event
+    {
+        std::timeline::Tempo             tempoOut;
+        std::timeline::TransportState    transportStateOut;
+        std::timeline::Position          positionOut;
+        std::timeline::TimeSignature     timeSignatureOut;
+    }
+
+    output stream float64 beatOut;
+
+    std::timeline::Tempo tempo;
+    std::timeline::TransportState transportState;
+    std::timeline::Position position;
+    std::timeline::TimeSignature timeSignature;
+
+    event tempoIn          ( std::timeline::Tempo e )           { tempo = e; tempoOut <- e;  beatsPerSample = (tempo.bpm/60.)/processor.frequency;}
+    event transportStateIn ( std::timeline::TransportState e )  { transportState = e; transportStateOut <- e; }
+    event positionIn       ( std::timeline::Position e )        { position = e; positionOut <- e; }
+    event timeSignatureIn  ( std::timeline::TimeSignature e )   { timeSignature =e; timeSignatureOut <- e; }
+
+    event jumpIn(float64 dt)
+    { 
+        position.quarterNote += dt; 
+        position.barStartQuarterNote = int(position.quarterNote/timeSignature.numerator)*timeSignature.numerator;
+    }
+
+    event beatIn (float64 t) 
+    { 
+        position.quarterNote = t; 
+        position.barStartQuarterNote = int(position.quarterNote/timeSignature.numerator)*timeSignature.numerator;
+    }
+
+    wrap<reportingPeriodFrames> reportCounter=0;
+    float64 beatsPerSample;
+
+    void init()
+    {
+        tempo.bpm = initTempo;
+        
+        transportState.flags=1;
+        
+        position.quarterNote = 0.;
+        position.frameIndex=0;
+        position.barStartQuarterNote = 0.;
+
+        timeSignature.numerator = 4;
+        timeSignature.denominator = 4;
+    }
+
+    void report()
+    {
+        tempoOut <- tempo;
+        timeSignatureOut <- timeSignature;
+        transportStateOut <- transportState;
+        positionOut <- position;
+    }
+
+    void main()
+    {
+        beatsPerSample = (tempo.bpm/60.)/processor.frequency;
+        loop
+        {
+            if( transportState.isPlaying() && reportCounter++ == 0 )
+                report();
+
+            if(transportState.flags > 0)
+            {
+                position.frameIndex++;  //please reset this to 0 at least every million years or so
+                position.barStartQuarterNote = int(position.quarterNote/timeSignature.numerator)*timeSignature.numerator;
+                beatOut <- position.quarterNote;
+                position.quarterNote += beatsPerSample;
+
+            }
+
+
+
+            advance();
+        }
+    }
+}
+
+namespace pattern(int maxNumNotes=1024) {
+    using Clamp = clamp<maxNumNotes>;
+
+    struct Note
+    {
+        bool active;
+        float64 start;
+        float64 end;
+        int noteNum;
+        int velocity;
+    }
+
+    struct IdxNote
+    {
+        int idx;
+        Note note;
+    }
+
+    struct PatternMetadata{
+        float64 start, end;
+        float64 loopStart, loopEnd;
+        bool active;  
+        int beatsPerBar;
+        int stepsPerBeat;
+
+    }
+
+    struct Pattern
+    {
+        Note[maxNumNotes] notes;
+        Clamp numNotes;
+        float64 start, end;
+        float64 loopStart, loopEnd;
+        int beatsPerBar,stepsPerBeat;
+        bool active;
+
+        void pushAndSort(Note note)
+        {
+            Clamp idx = this.numNotes;
+            for(Clamp i=0; i<this.numNotes;i++)
+            {
+                if(note.start < this.notes[i].start)
+                {
+                    idx = i;
+                    break;
+                }
+            }
+            this.numNotes++;
+
+            for( Clamp i=Clamp(this.numNotes); i-- > (idx+1); )
+            {
+                this.notes[i] = this.notes[Clamp(i-1)];
+            }
+            this.notes[idx] = note;
+        }
+
+        float64 songTimeToPatternTime(float64 t)
+        {
+            t += this.start;
+            if(t<this.loopEnd)
+                return t;
+
+            return wrap(t-this.loopStart, this.loopEnd-this.loopStart ) + this.loopStart;
+        }
+
+        void setMetadata(PatternMetadata md)
+        {
+            this.start =md.start;
+            this.end = md.end;
+            this.loopStart = md.loopStart;
+            this.loopEnd = md.loopEnd;
+            this.active = md.active;
+        }
+
+        bool notesAreEqual(Note n1, Note n2)
+        {
+            return (n1.start == n2.start) && (n1.end == n2.end) && (n1.noteNum == n2.noteNum);
+        }
+
+        int getIdxOfNote(Note note){
+            for(Clamp i=0; i<this.numNotes; i++)
+            {
+                if( this.notesAreEqual(this.notes[i],note) )
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        int removeNote(Note note)
+        {
+            int i  = this.getIdxOfNote(note);
+            if(i<0)
+                return i;
+
+            for(Clamp j=Clamp(i); j<this.numNotes ; j++)
+            {
+                this.notes[j] = this.notes[Clamp(j+1)];
+            }
+            this.numNotes--;
+            return i;
+
+        }
+
+        void replaceNote(Note note1, Note note2)
+        {
+            int i  = this.getIdxOfNote(note1);
+            if(i >= 0 )
+                this.notes[Clamp(i)] = note2;  
+        }
+
+
+    }
+
+
+
+    processor PatternPlayer
+    {
+        input event void start;
+        input event void stop;
+        input stream float64 beatIn;
+        input event float32 tempoIn;
+        input event PatternMetadata patternIn;
+        input event Note[2] noteIn;
+
+        output event std::midi::Message midiOut;
+        output event float64 patternTimeOut;
+
+        node playhead = PlayHead;
+
+        const int reportingPeriodFrames = int(processor.frequency/30.);
+        wrap<48000/20>  counter;
+        
+        int nextNoteIdx=-1;
+    
+        Pattern pattern;
+
+        extra::DynamicArray(Note,maxNumNotes)::Array currentlyPlayingNotes;
+        float64 prevT;
+
+        bool isPlaying = true;
+
+        bool noteIsCurrentlyPlaying(int noteNum)
+        {
+            for(int i=0; i<currentlyPlayingNotes.length; i++){
+                if( currentlyPlayingNotes.get(i).noteNum == noteNum )
+                    return true;
+            }
+            return false;
+        }
+
+        event start()
+        {
+            for(Clamp j=0; j<currentlyPlayingNotes.length; )
+            {
+                let n = currentlyPlayingNotes.get(j);
+                currentlyPlayingNotes.remove(j);
+                midiOut <- std::midi::createMessage( 128, n.noteNum, n.velocity );                        
+            }
+
+            isPlaying = true;
+            playhead.beatIn <- pattern.start;
+        }
+        event stop()
+        {
+            isPlaying = false;
+
+            playhead.beatIn <- pattern.start;
+            playhead.transportStateIn <- std::timeline::TransportState(1);
+
+            patternTimeOut <- pattern.start;
+        }
+
+        event tempoIn(float32 tempo)
+        {
+            playhead.tempoIn <- std::timeline::Tempo(tempo);
+        }
+
+        event patternIn(PatternMetadata md)
+        {
+            console <- "got a pattern";
+            pattern.setMetadata(md);
+            playhead.transportStateIn <- std::timeline::TransportState(1);
+        }
+        
+        event noteIn(Note[2] notes)
+        {
+            console <- "got a note\n";
+
+            if( notes[0].noteNum == 128 )
+            {
+                pattern.notes[pattern.numNotes] = notes[1];
+                pattern.numNotes++;
+            } 
+            else if( notes[0].noteNum == 129 )
+            {
+                console <- "deleting note";
+                pattern.removeNote(notes[1]);
+                for(Clamp i =0; i<currentlyPlayingNotes.length;i++){
+                    if(notes[1].noteNum == currentlyPlayingNotes.arr[i].noteNum)
+                        midiOut <- std::midi::createMessage( 128, notes[1].noteNum, notes[1].velocity );                        
+
+                }
+            } 
+            else
+            {
+                pattern.replaceNote(notes[0],notes[1]);
+            }
+
+        }
+
+        void main()
+        {
+            playhead.beatIn <- pattern.start;
+            playhead.transportStateIn <- std::timeline::TransportState(1);
+            loop
+            {
+                advance();
+                playhead.advance();
+                float64 t = playhead.beatOut; 
+
+                if(t >= pattern.loopEnd){
+                    float64 L = pattern.loopEnd - pattern.loopStart;
+                    t -= L;
+                    playhead.jumpIn <- -L;
+                }
+
+                if(t > pattern.end || !isPlaying)
+                {
+                    isPlaying = false;
+                    playhead.transportStateIn <- std::timeline::TransportState(0);
+
+                    for(Clamp j=0; j<currentlyPlayingNotes.length; )
+                    {
+                        let n = currentlyPlayingNotes.get(j);
+                        currentlyPlayingNotes.remove(j);
+                        midiOut <- std::midi::createMessage( 128, n.noteNum, n.velocity );                        
+                    }
+
+                    while(!isPlaying)
+                        advance();
+
+                    // t = pattern.start;
+                    // playhead.beatIn <- pattern.start;
+                    playhead.transportStateIn <- std::timeline::TransportState(1);
+
+                    
+                }
+
+                if(counter++ == 0)
+                    patternTimeOut <- t;
+
+                for(Clamp i=0; i < pattern.numNotes; i++)
+                {
+                    let note = pattern.notes[i];
+                    // if(t < note.start)
+                    //     break;
+                    
+                    if( t >= note.start && t < note.end && noteIsCurrentlyPlaying(note.noteNum)==false )
+                    {
+                        currentlyPlayingNotes.push(note);
+                        midiOut <- std::midi::createMessage( 144, note.noteNum, note.velocity );
+                    }
+
+                    for(Clamp j=0; j<currentlyPlayingNotes.length; j++)
+                    {
+                        let n = currentlyPlayingNotes.get(j);
+                        if(t<n.start || t>=n.end)
+                        {
+                            currentlyPlayingNotes.remove(j);
+                            midiOut <- std::midi::createMessage( 128, n.noteNum, n.velocity );                        
+                        }
+
+                    }
+                }
+
+            }
+        }
+
+
+    }
+
+}
+
+

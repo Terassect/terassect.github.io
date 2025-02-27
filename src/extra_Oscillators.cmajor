@@ -1,0 +1,179 @@
+namespace extra::oscillators
+{
+
+//Remember musicdsp.org? those where the days
+//https://www.musicdsp.org/en/latest/Synthesis/10-fast-sine-and-cosine-calculation.html
+//need to input a stream of frequency values for this to work
+processor Quadrature (using T=float, int renormalizePeriod = 64)
+{
+    input stream T frequency;
+    input event float sync;
+    output stream T<2> out;
+
+    T Sin=0.;
+    T Cos=1.;
+    T a;
+
+    wrap<renormalizePeriod> renormalizeCounter;
+
+    event sync (float e)
+    {
+        Sin = std::intrinsics::sin(T(e*twoPi));
+        Cos = std::intrinsics::cos(T(e*twoPi));
+    }
+
+    void renormalize()
+    {
+        var amp = sqrt(Sin**2 + Cos**2);
+
+        Sin /= amp; 
+        Cos /= amp;
+    }
+
+    void main()
+    {
+        loop
+        {
+            a = T( 2. * std::intrinsics::sin( T(pi) * frequency / T(processor.frequency) ) );
+            
+            Sin -= a*Cos;
+            Cos += a*Sin;
+
+            if(++renormalizeCounter==0)
+                renormalize();
+
+            out <- float<2>(float(Sin),float(Cos));
+            
+            advance();
+        }
+    }
+}
+
+
+//https://ccrma.stanford.edu/~stilti/papers/blit.pdf
+//need to input a stream of frequency values for these to work
+namespace blit (using T = float)
+{
+    processor TrapezoidalIntegrator
+    {
+        input stream T in;
+        output stream T out;
+
+        T accum;
+        let leak = T(0.9999);
+
+        void main()
+        {
+            loop
+            {
+                out <- (in*T(0.5) + accum);
+                accum += in;
+                accum *= leak;
+                advance();
+            }
+        }
+    }
+
+    processor Sinc
+	{
+		input stream T frequency;
+        input event T sync;
+		output stream T out;
+	
+		float64 phase;
+        let smallestNumber = 1e-6;
+
+        event sync (T e) { phase = e; }
+
+        float64 sincm(float64 x, float64 m)
+        {
+            if (x<smallestNumber)
+                return m;
+            else
+                return sin(m*x)/sin(x);
+        }
+	
+		void main()
+		{
+			loop
+			{
+				let f = frequency/processor.frequency;
+				let m = 2*floor( 0.5 / max(f,smallestNumber) )+1.;
+			
+                phase = addModulo2Pi(phase, f*pi);
+
+                out <- T(f)*T(sincm(phase,m));
+				
+				advance();
+			}
+		}
+	}
+
+    graph Saw
+    {
+        input stream T frequency;
+        output stream T out;
+        
+        node integrator = TrapezoidalIntegrator;
+        node sinc = Sinc;
+
+        connection
+        {
+            frequency -> sinc.frequency;
+            sinc.out - T(frequency/processor.frequency) -> integrator -> out;
+        }
+
+    }
+
+    /*
+    A (bandlimited) rectangle wave is two sawtooth waves with the same frequency, opposite polarity
+    and phase difference = 2pi x pulse width.  This is the easiest way I could think of to make that happen.
+        Theres gotta be a better way!
+    */
+    graph Rectangle (T minimumFrequencyHz=T(10))
+    {
+        input stream T frequency;
+        input stream T pw;
+        output stream T out;
+        
+        node
+        {
+            saw = Saw;
+            delay= SimpleDelay(processor.frequency/minimumFrequencyHz);
+        }
+
+        connection
+        {
+            frequency -> saw.frequency;
+            pw*T(processor.frequency)/max(minimumFrequencyHz,frequency) -> delay.delayTime;
+            saw -> delay.in;
+            saw.out - delay.out -> out;
+        }
+    }
+    
+    processor SimpleDelay (int maxDelayTimeSamples=4410)
+    {
+        input stream T in;
+        input stream T delayTime;
+        output stream T out;
+
+        using Wrap = wrap<maxDelayTimeSamples>;
+        T[maxDelayTimeSamples] buff;
+        Wrap t;
+
+        void main()
+        {
+            loop
+            {
+                buff[t] = in;
+                let d = min(int(delayTime), maxDelayTimeSamples);
+                out <- buff[Wrap(t-d)];
+                t++;
+                advance();
+            }
+        }
+        
+    }
+}
+
+} // namespace extra::oscillators

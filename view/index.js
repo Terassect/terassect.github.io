@@ -90,7 +90,7 @@ class Riffagram_View extends HTMLElement
 
         this.querySelector('#stopButton').onclick = (e) => {
             this.patchConnection.sendEventOrValue('stop',[]);
-            getPatternFromURL();
+            getStateFromUrl();
         }
 
         this.querySelector("#tempoInput").onchange = (e) => {
@@ -99,7 +99,7 @@ class Riffagram_View extends HTMLElement
         }
 
 
-        const postPatternToURL = (pattern) => {
+        const postStateToUrl = (pattern) => {
             var extras = {
                 tempo: this.querySelector("#tempoInput").value
             }
@@ -117,7 +117,7 @@ class Riffagram_View extends HTMLElement
             window.history.pushState("state","",url);
         }
 
-        const getPatternFromURL = () => {
+        const getStateFromUrl = () => {
             var s = sessionStorage.getItem("path");
             s=decodeURIComponent(s);
             try{
@@ -135,12 +135,15 @@ class Riffagram_View extends HTMLElement
 
         var timeout;
         var urlIsDirty;
+        this.stateChanged = () => {
+
+        }
         this.pianoRoll.patternChanged = function (){
             if(!timeout){
-                postPatternToURL(this.pattern);
+                postStateToUrl(this.pattern);
                 timeout = setTimeout(()=>{
                     if(urlIsDirty){
-                        postPatternToURL(this.pattern);
+                        postStateToUrl(this.pattern);
                     }
                     timeout=null;
                 },1000)
@@ -154,8 +157,10 @@ class Riffagram_View extends HTMLElement
 
         this.patchConnection.sendEventOrValue('stop',[]);
 
-
-        getPatternFromURL();
+        // this.querySelector("tempoInput").onclick = (e) => {
+        //     console.log("tempo mouse move: ",e)
+        // }
+        getStateFromUrl();
     }
 
     disconnectedCallback()
