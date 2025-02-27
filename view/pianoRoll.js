@@ -165,31 +165,21 @@ class PianoRoll extends HTMLElement {
         const setDims = () =>{
             console.log(canvases.clientWidth,canvases.clientHeight);
 
-            [this.pr, this.pro, this.pointerHandler].forEach(e => {
-                var s = e.style;
-                // s.position
-                s.position = 'absolute'
-                // s.top = canvases.style.top;
-                // s.left = canvases.style.left;
-                s.top = "0px";
-                s.left = "0px";
-                s.width="100%";
-                s.height="100%";
-                // s.width = canvases.style.width;
-                // s.height = canvases.style.height;
+            // [this.pr, this.pro, this.pointerHandler].forEach(e => {
+            //     var s = e.style;
+            //     s.position = 'absolute'
 
+            // });
 
-            });
             [this.pr, this.pro].forEach(e => {
 
-                e.width = canvases.clientWidth;
-                e.height = canvases.clientHeight;
+                e.width = e.clientWidth;
+                e.height = e.clientHeight;
             })
-            this.draw();
             console.log(canvases);
         }
-        setDims();
-        setTimeout(setDims,100);
+
+
 
         screen.orientation.addEventListener('change', (e) => {
             logg(JSON.stringify(e));
@@ -397,6 +387,13 @@ class PianoRoll extends HTMLElement {
             // if(e.button)
 
         }
+        setDims();
+
+        //TODO: Not have to do this:
+        setTimeout(()=>{
+            setDims();
+            this.draw();
+        },100);
 
         this.draw();
         this.connectedCallbackFinished = true;
