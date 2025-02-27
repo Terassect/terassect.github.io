@@ -1,0 +1,3 @@
+#!/bin/bash
+~/.vscode/extensions/cmajorsoftware.cmajor-tools-1.0.2771-linux-x64/bin/cmaj  generate --target=webaudio  src/Riffagram.cmajorpatch --o
+utput=cmaj_Riffagram.js
