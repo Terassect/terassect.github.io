@@ -52,6 +52,3 @@ input[type=button]{
 canvas, pointer-handler{
     position:absolute;
 }
-p{
-    padding:1em;
-}

@@ -7,7 +7,7 @@ class PianoRoll extends HTMLElement {
         note: 'rgb(200,20,200)',
         noteH: 'rgb(255,0,255)',
         gridLine: 'rgb(150,150,150)',
-        timeSelection: 'rgb(100,255,100,0.2)'
+        timeSelection: 'rgb(100,255,100,0.1)'
     }
 
     pr;
@@ -546,9 +546,10 @@ class PianoRoll extends HTMLElement {
         const x = Math.max(this.timeToX(note[0]), 0);
         const xp1 = Math.min(this.timeToX(note[1]), this.pr.width);
         const path = new Path2D();
-        path.rect(
+        path.roundRect(
             x, y,
             xp1 - x, yp1 - y
+            ,5
         )
         return path;
     }
@@ -560,25 +561,25 @@ class PianoRoll extends HTMLElement {
     }
 
     loopDragHandlePaths() {
-        const dragBoxWidth = 15;
+        const dragBoxWidth = 30;
         const dragBoxHeight = dragBoxWidth * 1.6;
 
         const path1 = new Path2D();
-        path1.rect(this.timeToX(this.pattern.lr[0]) - dragBoxWidth / 2., 0, dragBoxWidth, dragBoxHeight);
+        path1.rect(this.timeToX(this.pattern.lr[0]) - dragBoxWidth , 0, dragBoxWidth, dragBoxHeight);
         const path2 = new Path2D();
-        path2.rect(this.timeToX(this.pattern.lr[1]) - dragBoxWidth / 2., 0, dragBoxWidth, dragBoxHeight);
+        path2.rect(this.timeToX(this.pattern.lr[1]) , 0, dragBoxWidth, dragBoxHeight);
 
         return [path1, path2];
     }
 
     startendDragHandlePaths() {
-        const dragBoxWidth = 15;
+        const dragBoxWidth = 30;
         const dragBoxHeight = dragBoxWidth * 1.6;
 
         const path1 = new Path2D();
-        path1.rect(this.timeToX(this.pattern.se[0]) - dragBoxWidth / 2., this.pr.height - dragBoxHeight, dragBoxWidth, dragBoxHeight);
+        path1.rect(this.timeToX(this.pattern.se[0]) - dragBoxWidth , this.pr.height - dragBoxHeight, dragBoxWidth, dragBoxHeight);
         const path2 = new Path2D();
-        path2.rect(this.timeToX(this.pattern.se[1]) - dragBoxWidth / 2., this.pr.height - dragBoxHeight, dragBoxWidth, dragBoxHeight);
+        path2.rect(this.timeToX(this.pattern.se[1]) , this.pr.height - dragBoxHeight, dragBoxWidth, dragBoxHeight);
 
         return [path1, path2];
     }
