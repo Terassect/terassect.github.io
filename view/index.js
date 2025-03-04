@@ -164,15 +164,15 @@ class Riffagram_View extends HTMLElement
 
         <div id="songParms" >
             <button type="button" class="song-parm" id="playButton">
-                <svg viewBox="-2 -2 14 14">
-                    <polygon points="0,0 10,5 0,10" style="fill:none;stroke:black;stroke-width:1" 
+                <svg viewBox="0 0 10 10">
+                    <polygon points="1,1 9,5 1,9" style="fill:none;stroke:black;stroke-width:1" 
                     stroke-linejoin="round"
                     stroke-width="30" />
                 </svg>
             </button>
             <button type="button" class="song-parm" id="stopButton" >
-                <svg viewBox="-2 -2 14 14">
-                    <polygon points="0,0 10,0 10,10 0,10" style="fill:none;stroke:black;stroke-width:1"         
+                <svg viewBox="0 0 10 10">
+                    <polygon points="1,1 9,1 9,9 1,9" style="fill:none;stroke:black;stroke-width:1"         
                     stroke-linejoin="round"
                     stroke-width="30" />
 

@@ -79,10 +79,29 @@ class PianoRoll extends HTMLElement {
 
         this.innerHTML = `
 
+
+
         <div id="patternButtons">
-            <input id="deleteButton" class="prButton" type="button" value="del" />
-            <input id="duplicateButton" class="prButton" type="button" value="dupe" />
-            <input id="moveButton" class="prButton" type="button" value="Move" />
+            <button id="deleteButton" class="prButton" type="button" value="del" >
+            <svg viewBox="0 0 10 10" >
+                <polygon points="1,2 9,2, 8,9 2,9" />
+                <polygon points="3,2 4,1 6,1 7,2" />
+                <polygon points="3.5,4 3.8,7" />
+                <polygon points="6.5,4 6.2,7" />
+            </svg>
+            </button>
+            <button id="duplicateButton" class="prButton" type="button" value="dupe" />
+                <svg  viewBox="0 0 10 10" >
+                    <polygon points="1,1 7,1 7,7 1,7 " />
+                    <polygon points="3,3 9,3 9,9 3,9"  />
+                </svg>
+            <button id="moveButton" class="prButton" type="button" value="Move" >
+                <svg  viewBox="0 0 10 10" >
+                    <polygon style="stroke-dasharray: 4,1.66; stroke-dashoffset: 2" points="5,1 9,5 5,9 1,5" />
+                    <polygon points="5,1 5,9" />
+                    <polygon points="1,5 9,5" />
+                </svg>
+            </button>
 
         </div>
         <div id="canvases">
