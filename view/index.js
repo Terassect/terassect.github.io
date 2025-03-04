@@ -14,9 +14,7 @@ class Riffagram_View extends HTMLElement
         super();
         this.patchConnection = patchConnection;
         this.classList = "main-view-element";
-        this.innerHTML = this.getHTML();
     }
-    first=true; 
 
     sendPatternToProc;
 
@@ -24,18 +22,15 @@ class Riffagram_View extends HTMLElement
     {
         document.addEventListener('contextmenu', function(event) { event.preventDefault(); });
 
-        // this.style.width = "100%";
-        // this.style.height = "100%";
         this.style.display = "grid";
         this.style.gridTemplateColumns = "1fr 9fr";
 
-        if(!this.pianoRoll ){
-            if(customElements.getName(PianoRoll) == null){
-                customElements.define('piano-roll',PianoRoll);
-            }
-            this.pianoRoll = new PianoRoll();
-            this.appendChild(this.pianoRoll);
-        }
+        customElements.define('piano-roll',PianoRoll);
+
+        this.innerHTML = this.getHTML();
+
+        this.pianoRoll = this.querySelector("#pianoRoll");
+
 
         this.pianoRoll.procChangePatternMetadata = (pattern) => {
             const pat = {
@@ -152,9 +147,6 @@ class Riffagram_View extends HTMLElement
 
         this.patchConnection.sendEventOrValue('stop',[]);
 
-        // this.querySelector("tempoInput").onclick = (e) => {
-        //     console.log("tempo mouse move: ",e)
-        // }
         getStateFromUrl();
     }
 
@@ -171,11 +163,24 @@ class Riffagram_View extends HTMLElement
         <link rel="stylesheet" href="./styles.css">
 
         <div id="songParms" >
-            <input type="button" class="song-parm" id="playButton" value="play"/>
-            <input type="button" class="song-parm" id="stopButton" value="stop"/>
+            <button type="button" class="song-parm" id="playButton">
+                <svg viewBox="-2 -2 14 14">
+                    <polygon points="0,0 10,5 0,10" style="fill:none;stroke:black;stroke-width:1" 
+                    stroke-linejoin="round"
+                    stroke-width="30" />
+                </svg>
+            </button>
+            <button type="button" class="song-parm" id="stopButton" >
+                <svg viewBox="-2 -2 14 14">
+                    <polygon points="0,0 10,0 10,10 0,10" style="fill:none;stroke:black;stroke-width:1"         
+                    stroke-linejoin="round"
+                    stroke-width="30" />
+
+                </svg>
+            </button>
             <input type="number" class="song-parm" id="tempoInput" value="120"/>
         </div>
-
+        <piano-roll/>
         `;
     }
 }
