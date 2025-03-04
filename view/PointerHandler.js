@@ -29,8 +29,10 @@ class PointerHandler extends HTMLElement{
     }
 
     connectedCallback() {
+        this.touchAction = "none"
         document.oncontextmenu = (e) => {e.preventDefault();}
         var s = this.style;
+        s.touchAction = "none";
         s.width = "100%";
         s.height = "100%";
         s.position = "absolute";

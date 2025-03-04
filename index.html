@@ -4,7 +4,7 @@
   <title>Riffagram</title>
 </head>
 
-<body>
+<body touch-action="none" style="touch-action: none;" >
     <div id="cmaj-view-container"></div>
     <div id="cmaj-overlay">
       <div id="cmaj-info">
@@ -59,7 +59,8 @@
 </style>
 
 <script>
-var sockette = new WebSocket("wss://192.168.1.4:8765");
+var sockette;
+// sockette = new WebSocket("wss://192.168.1.4:8765");
 
 function logg (m,jsonStringify=false)  {
   if(!sockette){return;}
@@ -79,10 +80,15 @@ const testWakelock = async (e) => {
   logg("wakelock type:" + wakeLock.type,true);
 }
 
-sockette.onopen = (e) =>{
+if(sockette){
+  sockette.onopen = (e) =>{
   console.log("socket opened")
   testWakelock();
 }
+
+}
+
+
 
 </script>
 

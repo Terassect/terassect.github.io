@@ -337,11 +337,17 @@ class PianoRoll extends HTMLElement {
 
         this.pointerHandler.singleUp = (z, z0) => {
             logg(this.currentOperation)
+
+            outer:
             switch (this.currentOperation) {
                 case "pencil":
-                    if( this.visibleNotePaths().every(path => this.proCtx.isPointInPath(path,z.x,z.y) == false ) ){
-                        this.pencilClick(z); 
+                    for( const [i,path] of this.getVisibleNotePaths().entries() ){
+                        if( this.prCtx.isPointInPath( path, z.x, z.y ) ) {
+                            this.selectedNoteIdxs = [ this.getVisibleNoteIdxs()[i] ];
+                            break outer;
+                        }
                     }
+                    this.pencilClick(z); 
                     break;
                 case "select":
                     if(!this.selectionCorners){break;}
@@ -349,18 +355,15 @@ class PianoRoll extends HTMLElement {
                     const nr = this.sanitizeRange(this.selectionCorners.map(e=>e.n))
                     this.selectedNoteIdxs = this.noteIdxsInRanges(tr, nr);
                     this.timeSelection.sort();
-                    // if(this.timeSelection[0] == this.timeSelection[1]){this.timeSelection[1] += this.quantBeats;}
                     break;
             }
 
             setButtonsVisibility( this.selectedNoteIdxs.length > 0 )
 
-
             this.selectionCorners = null;
             this.selectedNoteDeltas = null;
             this.draw();
         }
-
 
         this.pro.onmousemove = (e) => {
             this.drawOverlay();
@@ -373,14 +376,12 @@ class PianoRoll extends HTMLElement {
                 }
             })
 
-            this.visibleNotePaths().forEach(path => {
+            this.getVisibleNotePaths().forEach(path => {
                 if (this.proCtx.isPointInPath(path, x, y)) {
                     this.proCtx.fillStyle = this.colors.noteH
                     this.proCtx.fill(path);
                 }
             });
-            // if(e.button)
-
         }
         setDims();
 
@@ -392,7 +393,6 @@ class PianoRoll extends HTMLElement {
 
         this.draw();
         this.connectedCallbackFinished = true;
-
     }
 
     setPattern(pattern) {
@@ -406,7 +406,6 @@ class PianoRoll extends HTMLElement {
         })
 
         this.pattern = pattern;
-
     }
 
     disconnectedCallback() {
@@ -538,7 +537,7 @@ class PianoRoll extends HTMLElement {
         }).filter(i => i != null)
     }
 
-    visibleNoteIdxs() { return this.noteIdxsInRanges(this.visibleTimeRange, this.visibleNoteRange); }
+    getVisibleNoteIdxs() { return this.noteIdxsInRanges(this.visibleTimeRange, this.visibleNoteRange); }
 
     pathOfNote(note) {
         const y = this.noteToY(note[2]);
@@ -554,8 +553,8 @@ class PianoRoll extends HTMLElement {
         return path;
     }
 
-    visibleNotePaths() {
-        return this.visibleNoteIdxs().map(i => {
+    getVisibleNotePaths() {
+        return this.getVisibleNoteIdxs().map(i => {
             return this.pathOfNote(this.pattern.ns[i]);
         })
     }
@@ -690,7 +689,7 @@ class PianoRoll extends HTMLElement {
 
         this.prCtx.fillStyle = this.colors.note;
 
-        this.visibleNotePaths().forEach(path => { this.prCtx.fill(path) })
+        this.getVisibleNotePaths().forEach(path => { this.prCtx.fill(path) })
 
         const dragBoxWidth = 15;
         const dragBoxHeight = dragBoxWidth * 1.6;
@@ -768,6 +767,7 @@ class PianoRoll extends HTMLElement {
     }
 
     pencilClick(e) {
+        console.log('pencil click')
         const [t, n] = [this.xToTime(e.x), this.yToNote(e.y)]
         const tq = this.quantizeTime(t);
         const note = [tq, tq + this.quantBeats, Math.floor(n), 100]
