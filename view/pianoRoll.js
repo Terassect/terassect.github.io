@@ -66,11 +66,8 @@ class PianoRoll extends HTMLElement {
             this.log(e)
         }
 
-        if (!this.pointerHandler) {
-            customElements.define('pointer-handler', PointerHandler);
-            // this.pointerHandler = new PointerHandler();
-            // canvases.appendChild(this.pointerHandler);
-        }
+        customElements.define('pointer-handler', PointerHandler);
+
         this.id = "pianoRoll";
         this.style.width = "100%";
         this.style.height = "100%";
@@ -79,8 +76,6 @@ class PianoRoll extends HTMLElement {
         this.style.display = "grid";
         this.style.gridTemplateColumns = "1fr 9fr";
         this.style.touchAction = "none";
-
-        // customElements.define('pointer-handler',PointerHandler);
 
         this.innerHTML = `
 
@@ -336,7 +331,7 @@ class PianoRoll extends HTMLElement {
         }
 
         this.pointerHandler.singleUp = (z, z0) => {
-            logg(this.currentOperation)
+            console.log(this.currentOperation)
 
             outer:
             switch (this.currentOperation) {
@@ -344,6 +339,8 @@ class PianoRoll extends HTMLElement {
                     for( const [i,path] of this.getVisibleNotePaths().entries() ){
                         if( this.prCtx.isPointInPath( path, z.x, z.y ) ) {
                             this.selectedNoteIdxs = [ this.getVisibleNoteIdxs()[i] ];
+                            this.timeSelection = this.pattern.ns[this.selectedNoteIdxs[0] ].slice(0,2);
+                            console.log(this.timeSelection);
                             break outer;
                         }
                     }
@@ -356,6 +353,7 @@ class PianoRoll extends HTMLElement {
                     this.selectedNoteIdxs = this.noteIdxsInRanges(tr, nr);
                     this.timeSelection.sort();
                     break;
+
             }
 
             setButtonsVisibility( this.selectedNoteIdxs.length > 0 )

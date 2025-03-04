@@ -93,7 +93,6 @@ class Riffagram_View extends HTMLElement
         }
 
         this.querySelector("#tempoInput").onchange = (e) => {
-            console.log("tempo changed");
             this.patchConnection.sendEventOrValue('tempoIn', this.querySelector("#tempoInput").value);
         }
 
@@ -101,7 +100,6 @@ class Riffagram_View extends HTMLElement
             var extras = {
                 tempo: this.querySelector("#tempoInput").value
             }
-            console.log("extras: ",extras);
 
             const un = JSON.stringify({...pattern,...extras})
             console.log("json len: ", un.length);
@@ -123,7 +121,6 @@ class Riffagram_View extends HTMLElement
                 this.pianoRoll.setPattern(pattern);
 
                 this.pianoRoll.draw();
-                console.log("recovered tempo: " ,pattern.tempo);
 
                 this.querySelector("#tempoInput").value = pattern.tempo ? pattern.tempo: defaults.tempo ;
                 this.querySelector("#tempoInput").onchange();
