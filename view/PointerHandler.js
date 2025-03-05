@@ -59,8 +59,10 @@ class PointerHandler extends HTMLElement{
         this.onpointerup = (event) => {
             this.log("up")
             const e = this.convertToLocal(event)
-            if(this.downs.length == 1){this.singleUp(e, this.downs[0])}
+
+            if(this.downs.length == 1){ this.singleUp(e, this.downs[0]) }
             if(this.downs.length == 2){ this.doubleUp(e, this.downs[0]) }
+
             this.log("\t" + e.id?.toString() + " " + JSON.stringify(this.downs.map(d=>d.id)))
             this.downs = this.downs.filter(d => d.id != e.id);
             this.log( "\t" + e.id?.toString()+" " +JSON.stringify(this.downs.map(d=>d.id)) )
@@ -79,7 +81,7 @@ class PointerHandler extends HTMLElement{
             const e = this.convertToLocal(event)
 
             const hPrev = this.getCurrentlyHeld().slice();
-            this.heldCoords[e.id] = {x:e.x,y:e.y}
+            this.heldCoords[e.id] = { x:e.x, y:e.y }
             const h = this.getCurrentlyHeld().slice();
 
             if(this.downs.length == 1 ){

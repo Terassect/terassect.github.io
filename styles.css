@@ -1,9 +1,15 @@
-input[type=button], button{
+button{
     margin: 0px ;
     width: 100%;
     
     border-style: solid;
     border-width: 1px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: black;
+    aspect-ratio: 1/1;
+    position: relative;
+
 }
 
 .main-view-element {
@@ -17,7 +23,7 @@ input[type=button], button{
 .prButton{
     visibility: hidden;
     width: 100%;
-    height: 20%;
+    margin-top:25% ;
 }
 
 *{
@@ -27,18 +33,17 @@ input[type=button], button{
 }
 
 #songParms{
+    margin-top: 25%;
+
     width:100%;
     height: 100%;
     position: relative;
 }
 .song-parm{
-    margin-top: 100%;
+    margin-top: 25%;
     width: 100%;
     aspect-ratio: 1/1;
-    position: relative;
-    border-style: solid;
-    border-width: 1px;
-    border-color: black;
+
 }
 
 #canvases{
@@ -55,7 +60,6 @@ canvas, pointer-handler{
 
 svg{
     width: 100%;
-    height: 100%;
     aspect-ratio: 1/1;
 
     fill:none;

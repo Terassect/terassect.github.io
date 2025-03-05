@@ -78,23 +78,21 @@ class PianoRoll extends HTMLElement {
         this.style.touchAction = "none";
 
         this.innerHTML = `
-
-
-
         <div id="patternButtons">
             <button id="deleteButton" class="prButton" type="button" value="del" >
-            <svg viewBox="0 0 10 10" >
-                <polygon points="1,2 9,2, 8,9 2,9" />
-                <polygon points="3,2 4,1 6,1 7,2" />
-                <polygon points="3.5,4 3.8,7" />
-                <polygon points="6.5,4 6.2,7" />
-            </svg>
+                <svg viewBox="0 0 10 10" >
+                    <polygon points="1,2 9,2, 8,9 2,9" />
+                    <polygon points="3,2 4,1 6,1 7,2" />
+                    <polygon points="3.5,4 3.8,7" />
+                    <polygon points="6.5,4 6.2,7" />
+                </svg>
             </button>
             <button id="duplicateButton" class="prButton" type="button" value="dupe" />
                 <svg  viewBox="0 0 10 10" >
                     <polygon points="1,1 7,1 7,7 1,7 " />
                     <polygon points="3,3 9,3 9,9 3,9"  />
                 </svg>
+            </button>
             <button id="moveButton" class="prButton" type="button" value="Move" >
                 <svg  viewBox="0 0 10 10" >
                     <polygon style="stroke-dasharray: 4,1.66; stroke-dashoffset: 2" points="5,1 9,5 5,9 1,5" />
@@ -102,7 +100,6 @@ class PianoRoll extends HTMLElement {
                     <polygon points="1,5 9,5" />
                 </svg>
             </button>
-
         </div>
         <div id="canvases">
             <meta id="Deleting this will break things" />
@@ -110,7 +107,7 @@ class PianoRoll extends HTMLElement {
             <canvas id="pianoRollOverlay"></canvas>
             <pointer-handler id="pointerHandler" />
         </div>
-    `;
+        `;
 
         this.pointerHandler = this.querySelector("#pointerHandler")
 
@@ -143,6 +140,7 @@ class PianoRoll extends HTMLElement {
 
         this.querySelector("#duplicateButton").onclick = (e) =>{
             duplicate();
+            this.draw();
         }
 
         const duplicate = () => {
@@ -169,13 +167,11 @@ class PianoRoll extends HTMLElement {
 
         var canvases = this.querySelector('#canvases');
 
-
         this.pr = this.querySelector('#pianoRollCa');
         this.pro = this.querySelector('#pianoRollOverlay');
 
         this.prCtx = this.pr.getContext("2d");
         this.proCtx = this.pro.getContext("2d");
-
 
         const setDims = () =>{
             console.log(canvases.clientWidth,canvases.clientHeight);
@@ -187,8 +183,6 @@ class PianoRoll extends HTMLElement {
             })
             console.log(canvases);
         }
-
-
 
         screen.orientation.addEventListener('change', (e) => {
             logg(JSON.stringify(e));
@@ -222,10 +216,15 @@ class PianoRoll extends HTMLElement {
         }
 
         this.pointerHandler.doubleUp = (z,z0) => {
-            // this.selectedNoteDeltas = [];
-            // var d0 = this.pointerHandler.downs[0]
-            // d0 ={ ...this.pointerHandler.heldCoords[d0.id], id:z.id};
-            // this.pointerHandler.downs[0] = d0;
+            this.selectedNoteDeltas = null;
+
+            const Id = this.pointerHandler.downs.map(d => d.id).filter(id => id!=z.id)[0];
+            const c = this.pointerHandler.heldCoords[Id];
+            this.pointerHandler.downs.forEach( d =>{
+                d.x = c.x; d.y = c.y;
+                d.t = this.xToTime(c.x);
+                d.n = this.yToNote(c.y);
+            }) 
         }
 
         this.pointerHandler.doubleDrag = (z, zPrev) => {
@@ -289,7 +288,6 @@ class PianoRoll extends HTMLElement {
                 case "move":
                     if(!this.selectedNoteDeltas){
                         const [t0,n0] = [this.xToTime(z0.x),this.yToNote(z0.y)]
-
                         this.selectedNoteDeltas = this.selectedNoteIdxs.map( i=> {
                             return { 
                                 t: this.pattern.ns[i][0] - t0,
@@ -299,7 +297,8 @@ class PianoRoll extends HTMLElement {
 
                         this.selectedNoteDeltas.push({t:this.timeSelection[0]-t0})
                         this.selectedNoteDeltas.push({t:this.timeSelection[1]-t0})
-
+                        logg("calc deltas")
+                        logg(this.selectedNoteDeltas,true);
                     }
 
                     var [t,n] = [ this.xToTime(z.x), this.yToNote(z.y) ];
