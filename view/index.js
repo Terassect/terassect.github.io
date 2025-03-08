@@ -85,9 +85,18 @@ class Riffagram_View extends HTMLElement
         }
 
         this.pianoRoll.procChangePatternMetadata(this.pianoRoll.pattern);
-
-        this.patchConnection.addEndpointListener("patternTimeOut",(e) =>{
+        
+        const playButton = this.querySelector('#playButton');
+        playButton.style.transition = "background-color 0.25s ease";
+        playButton.fadeTimeout ;
+        this.patchConnection.addEndpointListener("patternTimeOut",(e) => {
             this.pianoRoll.setPlayingTime(e);
+            if(playButton.style.backgroundColor != "lime"){
+                playButton.style.backgroundColor = "lime";
+            }
+            clearTimeout(playButton.fadeTimeout)
+            playButton.fadeTimeout = setTimeout(() => {playButton.style.backgroundColor = "honeydew";},100)
+            
         });
 
         const guiNoteToProcNote= (n) => {
@@ -118,7 +127,8 @@ class Riffagram_View extends HTMLElement
 
         this.patchConnection.sendEventOrValue('start',);
 
-        this.querySelector('#playButton').onclick = (e) => {
+
+        playButton.onclick = (e) => {
             this.patchConnection.sendEventOrValue('start',[]);
         }
 
