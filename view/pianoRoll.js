@@ -2,12 +2,12 @@ import PointerHandler from "./PointerHandler.js"
 
 class PianoRoll extends HTMLElement {
 
-
     colors = {
         note: 'rgb(200,20,200)',
         noteH: 'rgb(255,0,255)',
         gridLine: 'rgb(150,150,150)',
-        timeSelection: 'rgb(100,255,100,0.1)'
+        timeSelection: 'rgb(100,255,100,0.1)',
+
     }
 
     pr;
@@ -61,6 +61,43 @@ class PianoRoll extends HTMLElement {
         super();
     }
 
+    layoutPortrait(){
+
+    }
+
+    resize(){
+        const r = this.getBoundingClientRect();
+        const buttons = this.querySelector("#patternButtons")
+        console.log("inner r", r);
+
+        if(r.width < r.height){
+            const buttonsDim = window.innerHeight*0.05;
+            const h = r.height-buttonsDim;
+            const w = r.width;
+
+            buttons.style.width = "100%";
+            buttons.style.height = buttonsDim.toString()+"px";
+
+
+            var canvases = this.querySelector("#canvases");
+
+            canvases.style.width = numToStrPx(w)
+            canvases.style.height = numToStrPx(h);
+
+            for(const c of canvases.children){
+                c.style.width = numToStrPx(w)
+                c.style.height = numToStrPx(h);
+                c.width = w;
+                c.height = h;
+            }
+            console.log("dims set portrait",r)
+
+        } else {
+            // buttons.style.height = "100%";
+        }
+        this.draw();
+    }
+
     connectedCallback() {
         this.onscroll = (e) => {
             this.log(e)
@@ -69,14 +106,11 @@ class PianoRoll extends HTMLElement {
         customElements.define('pointer-handler', PointerHandler);
 
         this.id = "pianoRoll";
-        this.style.width = "100%";
-        this.style.height = "100%";
-        this.style.padding = "0px";
-        this.style.margin = "0px";
-        this.style.display = "grid";
-        this.style.gridTemplateColumns = "1fr 9fr";
-        this.style.touchAction = "none";
+        // this.style.display = "grid";
+        // this.style.gridTemplateColumns = "1fr 9fr";
+        // this.style.gridTemplateRows = "1fr 9fr";
 
+        this.style.touchAction = "none";
         this.innerHTML = `
         <div id="patternButtons">
             <button id="deleteButton" class="prButton" type="button" value="del" >
@@ -166,33 +200,22 @@ class PianoRoll extends HTMLElement {
         }
 
         var canvases = this.querySelector('#canvases');
+        
+        [this.pr,this.pro,this.pointerHandler].forEach( e => {
+            // const rect = canvases.getBoundingClientRect();
+            // console.log(rect);
+            // e.style.width  = rect.width.toString()+"px";
+            // e.style.height = rect.height.toString()+"px";
+            // e.width = rect.width;
+            // e.height = rect.height;
+        })
 
         this.pr = this.querySelector('#pianoRollCa');
         this.pro = this.querySelector('#pianoRollOverlay');
 
         this.prCtx = this.pr.getContext("2d");
         this.proCtx = this.pro.getContext("2d");
-
-        const setDims = () =>{
-            console.log(canvases.clientWidth,canvases.clientHeight);
-
-            [this.pr, this.pro].forEach(e => {
-
-                e.width = e.clientWidth;
-                e.height = e.clientHeight;
-            })
-            console.log(canvases);
-        }
-
-        screen.orientation.addEventListener('change', (e) => {
-            logg(JSON.stringify(e));
-        });
         
-        window.addEventListener('resize', (event) => {
-           setDims();
-           this.draw();
-        }, true);
-
         const pinchZoomPan = (z, zPrev, q, screenToLocalFn, screenMax) => {
             const l0 = screenToLocalFn(zPrev[0][q]);
             const l1 = screenToLocalFn(zPrev[1][q]);
@@ -221,7 +244,8 @@ class PianoRoll extends HTMLElement {
             const Id = this.pointerHandler.downs.map(d => d.id).filter(id => id!=z.id)[0];
             const c = this.pointerHandler.heldCoords[Id];
             this.pointerHandler.downs.forEach( d =>{
-                d.x = c.x; d.y = c.y;
+                d.x = c.x; 
+                d.y = c.y;
                 d.t = this.xToTime(c.x);
                 d.n = this.yToNote(c.y);
             }) 
@@ -399,13 +423,14 @@ class PianoRoll extends HTMLElement {
                 }
             });
         }
-        setDims();
 
-        //TODO: Not have to do this:
-        setTimeout(()=>{
-            setDims();
-            this.draw();
-        },100);
+        this.resize();
+
+        // //TODO: Not have to do this:
+        // setTimeout(()=>{
+        //     this.resize();
+        //     this.draw();
+        // },100);
 
         this.draw();
         this.connectedCallbackFinished = true;

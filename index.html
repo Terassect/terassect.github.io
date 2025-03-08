@@ -59,8 +59,9 @@
 </style>
 
 <script>
+
 var sockette;
-sockette = new WebSocket("wss://192.168.1.28:8765");
+// sockette = new WebSocket("wss://192.168.1.28:8765");
 
 function logg (m,jsonStringify=false)  {
   if(!sockette){return;}
@@ -88,7 +89,7 @@ if(sockette){
 
 }
 
-
+const numToStrPx = (x)=>{return x.toString()+"px"} ;
 
 </script>
 

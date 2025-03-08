@@ -8,6 +8,7 @@ const defaults = {
 class Riffagram_View extends HTMLElement
 {
     pianoRoll ;
+    parms;
 
     constructor (patchConnection)
     {
@@ -18,18 +19,56 @@ class Riffagram_View extends HTMLElement
 
     sendPatternToProc;
 
+    resize(){
+        const r = this.getBoundingClientRect();
+        const parmsW = window.innerHeight*0.05;//r.height*0.05;
+        const butts = document.getElementsByTagName('button');
+
+        if(r.width > r.height){
+            this.parms.style.width = numToStrPx(parmsW);
+            this.parms.style.height = "100%";
+            this.pianoRoll.style.width = numToStrPx(r.width - parmsW);
+            
+        } else {
+            this.parms.style.height = numToStrPx(parmsW);
+            this.parms.style.width =  numToStrPx(r.width);
+
+            const tempo = document.getElementById("tempoInput");
+            tempo.style.fontSize = numToStrPx(parmsW);
+            tempo.style.top = "0px";
+            tempo.style.height = numToStrPx(parmsW)
+
+            this.pianoRoll.style.width = numToStrPx(r.width);
+            this.pianoRoll.style.height = numToStrPx(r.height - parmsW);
+            this.pianoRoll.style.top = numToStrPx(parmsW);
+            this.pianoRoll.style.left = "0px";
+
+        }
+
+
+        for( const e of document.getElementsByTagName('button') ){
+            console.log(e);
+            e.style.width = numToStrPx(parmsW);
+            e.style.height = numToStrPx(parmsW);
+        }
+
+        console.log("outer rsize");
+        this.pianoRoll.resize();
+    }
+
     connectedCallback()
     {
         document.addEventListener('contextmenu', function(event) { event.preventDefault(); });
 
-        this.style.display = "grid";
-        this.style.gridTemplateColumns = "1fr 9fr";
+        // this.style.display = "grid";
+        // this.style.gridTemplateColumns = "1fr 9fr";
 
         customElements.define('piano-roll',PianoRoll);
 
         this.innerHTML = this.getHTML();
 
         this.pianoRoll = this.querySelector("#pianoRoll");
+        this.parms = this.querySelector("#patternPlayerParms");
 
 
         this.pianoRoll.procChangePatternMetadata = (pattern) => {
@@ -88,7 +127,6 @@ class Riffagram_View extends HTMLElement
         }
 
         this.querySelector("#tempoInput").onchange = (e) => {
-            this.patchConnection.sendEventOrValue('tempoIn', this.querySelector("#tempoInput").value);
         }
 
         const postStateToUrl = (pattern) => {
@@ -142,12 +180,58 @@ class Riffagram_View extends HTMLElement
             }
         }
 
+        const tempo = document.getElementById("tempoInput");
+        tempo.val = 120;
+        tempo.dsx = 0;
+        tempo.dsy = 0;
+        tempo.dsVal = tempo.val;
+        tempo.isDragging = false;
+
+        const blank= document.createElement('span');
+    
+        tempo.ondragstart = (e) =>{
+            tempo.dsx = e.screenX;
+            tempo.dsy = e.screenY;
+            tempo.dsVal = tempo.val;
+            e.dataTransfer?.setDragImage(blank,0,0)
+            tempo.isDragging = true;
+        }
+    
+        tempo.ondrag = (e) => {
+            if(e.screenX ==0 ){return;}
+            const dx = e.screenX - tempo.dsx;
+            const dy = e.screenY -tempo.dsy;
+            tempo.val = tempo.dsVal * Math.exp( (dx-dy)/2000 );
+            tempo.val = Math.floor(tempo.val);
+            tempo.innerHTML = tempo.val.toString();
+            this.patchConnection.sendEventOrValue('tempoIn',tempo.val);
+        };
+    
+        tempo.addEventListener("touchstart",(e)=>{
+            console.log(e);
+            tempo.ondragstart(e.touches[0]);
+        })
+        this.addEventListener("touchend",(e)=>{tempo.isDragging = false;})
+        this.addEventListener("touchmove",(e)=>{
+            if(tempo.isDragging){tempo.ondrag(e.touches[0]);}
+            
+        })
+
 
         while(this.pianoRoll.connectedCallbackFinished == false){}
 
         this.patchConnection.sendEventOrValue('stop',[]);
 
         getStateFromUrl();
+
+        window.addEventListener('resize', (event) => {
+            this.resize();
+         }, true);
+
+        setTimeout(()=>{
+            this.resize();
+            // this.draw();
+        },100);
     }
 
     disconnectedCallback()
@@ -162,7 +246,7 @@ class Riffagram_View extends HTMLElement
         return `
         <link rel="stylesheet" href="./styles.css">
 
-        <div id="songParms" >
+        <div id="patternPlayerParms" >
             <button type="button" class="song-parm" id="playButton">
                 <svg viewBox="0 0 10 10">
                     <polygon points="1,1 9,5 1,9" style="fill:none;stroke:black;stroke-width:1" 
@@ -175,12 +259,11 @@ class Riffagram_View extends HTMLElement
                     <polygon points="1,1 9,1 9,9 1,9" style="fill:none;stroke:black;stroke-width:1"         
                     stroke-linejoin="round"
                     stroke-width="30" />
-
                 </svg>
             </button>
-            <input type="number" class="song-parm" id="tempoInput" value="120"/>
+            <span id="tempoInput" draggable="true" >120</span>
         </div>
-        <piano-roll/>
+        <piano-roll id="pianoRoll" />
         `;
     }
 }

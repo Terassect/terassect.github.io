@@ -1,13 +1,8 @@
-button{
-    margin: 0px ;
-    width: 100%;
-    
+button{   
     border-style: solid;
     border-width: 1px;
-    border-style: solid;
-    border-width: 1px;
+
     border-color: black;
-    aspect-ratio: 1/1;
     position: relative;
 
 }
@@ -17,13 +12,6 @@ button{
     width: 100%;
     height: 100%;
     padding: 0px;
-    opacity: 100%;
-}
-
-.prButton{
-    visibility: hidden;
-    width: 100%;
-    margin-top:25% ;
 }
 
 *{
@@ -32,19 +20,19 @@ button{
     overflow: clip;
 }
 
-#songParms{
-    margin-top: 25%;
-
-    width:100%;
-    height: 100%;
-    position: relative;
+#patternPlayerParms{
+    position: absolute;
 }
-.song-parm{
-    margin-top: 25%;
-    width: 100%;
-    aspect-ratio: 1/1;
 
+piano-roll{
+    position: absolute;
 }
+
+#patternButtons{
+    overflow: clip;
+    visibility: hidden;
+}
+
 
 #canvases{
     position: relative;
@@ -54,8 +42,12 @@ button{
 
 canvas, pointer-handler{
     position:absolute;
-    height: 100%;
-    width: 100%;
+}
+
+#tempoInput{
+    display: inline-flex;
+    align-items: center;
+    position: inherit;
 }
 
 svg{
