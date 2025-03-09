@@ -36,7 +36,8 @@ class Riffagram_View extends HTMLElement
             const tempo = document.getElementById("tempoInput");
             tempo.style.fontSize = numToStrPx(parmsW);
             tempo.style.top = "0px";
-            tempo.style.height = numToStrPx(parmsW)
+            tempo.style.height = numToStrPx(parmsW);
+            tempo.style.width = numToStrPx(2.5*parmsW);
 
             this.pianoRoll.style.width = numToStrPx(r.width);
             this.pianoRoll.style.height = numToStrPx(r.height - parmsW);

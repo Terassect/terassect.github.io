@@ -3,7 +3,7 @@ import PointerHandler from "./PointerHandler.js"
 class PianoRoll extends HTMLElement {
 
     colors = {
-        note: 'rgb(200,20,200)',
+        note: 'rgb(150,30,150)',
         noteH: 'rgb(255,0,255)',
         gridLine: 'rgb(150,150,150)',
         timeSelection: 'rgb(100,255,100,0.1)',

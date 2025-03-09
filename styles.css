@@ -50,6 +50,9 @@ canvas, pointer-handler{
     display: inline-flex;
     align-items: center;
     position: inherit;
+    box-sizing: border-box;
+    border: 2px solid black;
+    justify-content: center;
 }
 
 svg{
