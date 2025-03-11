@@ -24,20 +24,31 @@ class Riffagram_View extends HTMLElement
         const parmsW = window.innerHeight*0.05;//r.height*0.05;
         const butts = document.getElementsByTagName('button');
 
-        if(r.width > r.height){
+        if(r.width > r.height ){
             this.parms.style.width = numToStrPx(parmsW);
             this.parms.style.height = "100%";
             this.pianoRoll.style.width = numToStrPx(r.width - parmsW);
+            this.pianoRoll.style.left = numToStrPx(parmsW);
+            this.pianoRoll.style.height = "100%";
+            this.pianoRoll.style.top = "0px";
+
+            const tempo = document.getElementById("tempoInput");
+            tempo.style.position = "relative";
+            tempo.style.fontSize = numToStrPx(parmsW/2);
+            tempo.style.top = "0px";
+            tempo.style.height = numToStrPx(parmsW);
+            tempo.style.width = numToStrPx(parmsW);
             
         } else {
             this.parms.style.height = numToStrPx(parmsW);
             this.parms.style.width =  numToStrPx(r.width);
-
             const tempo = document.getElementById("tempoInput");
+            tempo.style.position = "inherit";
+
             tempo.style.fontSize = numToStrPx(parmsW);
             tempo.style.top = "0px";
             tempo.style.height = numToStrPx(parmsW);
-            tempo.style.width = numToStrPx(2.5*parmsW);
+            tempo.style.width = numToStrPx(2*parmsW);
 
             this.pianoRoll.style.width = numToStrPx(r.width);
             this.pianoRoll.style.height = numToStrPx(r.height - parmsW);
@@ -48,12 +59,10 @@ class Riffagram_View extends HTMLElement
 
 
         for( const e of document.getElementsByTagName('button') ){
-            console.log(e);
             e.style.width = numToStrPx(parmsW);
             e.style.height = numToStrPx(parmsW);
         }
 
-        console.log("outer rsize");
         this.pianoRoll.resize();
     }
 
@@ -142,8 +151,9 @@ class Riffagram_View extends HTMLElement
 
         const postStateToUrl = (pattern) => {
             var extras = {
-                tempo: this.querySelector("#tempoInput").value
+                tempo: parseInt(this.querySelector("#tempoInput").innerHTML)
             }
+            console.log(extras)
 
             const un = JSON.stringify({...pattern,...extras})
             console.log("json len: ", un.length);
@@ -219,7 +229,6 @@ class Riffagram_View extends HTMLElement
         };
     
         tempo.addEventListener("touchstart",(e)=>{
-            console.log(e);
             tempo.ondragstart(e.touches[0]);
         })
         this.addEventListener("touchend",(e)=>{tempo.isDragging = false;})

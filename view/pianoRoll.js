@@ -3,7 +3,7 @@ import PointerHandler from "./PointerHandler.js"
 class PianoRoll extends HTMLElement {
 
     colors = {
-        note: 'rgb(150,30,150)',
+        note: 'rgb(170,30,170)',
         noteH: 'rgb(255,0,255)',
         gridLine: 'rgb(150,150,150)',
         timeSelection: 'rgb(100,255,100,0.1)',
@@ -69,31 +69,41 @@ class PianoRoll extends HTMLElement {
         const r = this.getBoundingClientRect();
         const buttons = this.querySelector("#patternButtons")
         console.log("inner r", r);
+        var canvases = this.querySelector("#canvases");
 
+        var w,h;
         if(r.width < r.height){
             const buttonsDim = window.innerHeight*0.05;
-            const h = r.height-buttonsDim;
-            const w = r.width;
+
+            h = r.height-buttonsDim;
+            w = r.width;
 
             buttons.style.width = "100%";
             buttons.style.height = buttonsDim.toString()+"px";
-
-
-            var canvases = this.querySelector("#canvases");
-
-            canvases.style.width = numToStrPx(w)
-            canvases.style.height = numToStrPx(h);
-
-            for(const c of canvases.children){
-                c.style.width = numToStrPx(w)
-                c.style.height = numToStrPx(h);
-                c.width = w;
-                c.height = h;
-            }
-            console.log("dims set portrait",r)
+            canvases.style.left = "0px";
+            canvases.style.top = numToStrPx(buttonsDim);
 
         } else {
-            // buttons.style.height = "100%";
+            const buttonsDim = window.innerWidth*0.05;
+
+            buttons.style.height = "100%";
+            buttons.style.width = buttonsDim.toString()+"px";
+            h = r.height
+            w = r.width-buttonsDim;
+            canvases.style.top = "0px";
+            canvases.style.left = numToStrPx(buttonsDim);
+        }
+
+
+        canvases.style.width = numToStrPx(w)
+        canvases.style.height = numToStrPx(h);
+        
+
+        for(const c of canvases.children){
+            c.style.width = numToStrPx(w)
+            c.style.height = numToStrPx(h);
+            c.width = w;
+            c.height = h;
         }
         this.draw();
     }
