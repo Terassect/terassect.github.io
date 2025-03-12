@@ -6,7 +6,6 @@ button{
     position: relative;
 
     background-color:honeydew;
-
 }
 
 .main-view-element {
@@ -17,9 +16,11 @@ button{
 }
 
 *{
+    font-family: monospace;
     padding: 0px;
     margin: 0px;
     overflow: clip;
+    touch-action: none;
 }
 
 #patternPlayerParms{

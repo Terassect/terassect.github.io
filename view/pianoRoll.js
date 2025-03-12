@@ -61,10 +61,6 @@ class PianoRoll extends HTMLElement {
         super();
     }
 
-    layoutPortrait(){
-
-    }
-
     resize(){
         const r = this.getBoundingClientRect();
         const buttons = this.querySelector("#patternButtons")
@@ -73,7 +69,6 @@ class PianoRoll extends HTMLElement {
         var w,h;
         
         if(r.width < r.height){
-
             h = r.height-buttonsDim;
             w = r.width;
 
@@ -83,18 +78,17 @@ class PianoRoll extends HTMLElement {
             canvases.style.top = numToStrPx(buttonsDim);
 
         } else {
-            buttons.style.height = "100%";
-            buttons.style.width = numToStrPx(buttonsDim);
             h = r.height
             w = r.width-buttonsDim;
+
+            buttons.style.height = "100%";
+            buttons.style.width = numToStrPx(buttonsDim);
             canvases.style.top = "0px";
             canvases.style.left = numToStrPx(buttonsDim);
         }
 
-
         canvases.style.width = numToStrPx(w)
-        canvases.style.height = numToStrPx(h);
-        
+        canvases.style.height = numToStrPx(h);        
 
         for(const c of canvases.children){
             c.style.width = numToStrPx(w)
@@ -432,12 +426,6 @@ class PianoRoll extends HTMLElement {
         }
 
         this.resize();
-
-        // //TODO: Not have to do this:
-        // setTimeout(()=>{
-        //     this.resize();
-        //     this.draw();
-        // },100);
 
         this.draw();
         this.connectedCallbackFinished = true;

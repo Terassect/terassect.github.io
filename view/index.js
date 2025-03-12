@@ -20,9 +20,16 @@ class Riffagram_View extends HTMLElement
     sendPatternToProc;
 
     resize(){
+        const parmsW = Math.max(window.innerHeight,window.innerWidth)*0.05;
+
+        this.style.width = numToStrPx(window.innerWidth);
+        this.style.height = numToStrPx(window.innerHeight);
         const r = this.getBoundingClientRect();
-        const parmsW = Math.max(window.innerHeight,window.innerWidth)*0.05;//r.height*0.05;
-        const butts = document.getElementsByTagName('button');
+
+        for( const e of document.getElementsByTagName('button') ){
+            e.style.width = numToStrPx(parmsW);
+            e.style.height = numToStrPx(parmsW);
+        }
 
         if(r.width > r.height ){
             this.parms.style.width = numToStrPx(parmsW);
@@ -58,10 +65,7 @@ class Riffagram_View extends HTMLElement
             this.pianoRoll.style.left = "0px";
         }
 
-        for( const e of document.getElementsByTagName('button') ){
-            e.style.width = numToStrPx(parmsW);
-            e.style.height = numToStrPx(parmsW);
-        }
+
 
         this.pianoRoll.resize();
     }
@@ -69,9 +73,6 @@ class Riffagram_View extends HTMLElement
     connectedCallback()
     {
         document.addEventListener('contextmenu', function(event) { event.preventDefault(); });
-
-        // this.style.display = "grid";
-        // this.style.gridTemplateColumns = "1fr 9fr";
 
         customElements.define('piano-roll',PianoRoll);
 
@@ -231,9 +232,7 @@ class Riffagram_View extends HTMLElement
         this.addEventListener("touchend",(e)=>{tempo.isDragging = false;})
         this.addEventListener("touchmove",(e)=>{
             if(tempo.isDragging){tempo.ondrag(e.touches[0]);}
-            
         })
-
 
         while(this.pianoRoll.connectedCallbackFinished == false){}
 
@@ -245,10 +244,9 @@ class Riffagram_View extends HTMLElement
             this.resize();
          }, true);
 
-        setTimeout(()=>{
-            this.resize();
-            // this.draw();
-        },100);
+         this.resize();
+         console.log(window.innerWidth,window.innerHeight,this.getBoundingClientRect())
+
     }
 
     disconnectedCallback()
