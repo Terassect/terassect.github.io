@@ -68,12 +68,11 @@ class PianoRoll extends HTMLElement {
     resize(){
         const r = this.getBoundingClientRect();
         const buttons = this.querySelector("#patternButtons")
-        console.log("inner r", r);
         var canvases = this.querySelector("#canvases");
-
+        const buttonsDim = Math.max(window.innerHeight,window.innerWidth)*0.05;
         var w,h;
+        
         if(r.width < r.height){
-            const buttonsDim = window.innerHeight*0.05;
 
             h = r.height-buttonsDim;
             w = r.width;
@@ -84,10 +83,8 @@ class PianoRoll extends HTMLElement {
             canvases.style.top = numToStrPx(buttonsDim);
 
         } else {
-            const buttonsDim = window.innerWidth*0.05;
-
             buttons.style.height = "100%";
-            buttons.style.width = buttonsDim.toString()+"px";
+            buttons.style.width = numToStrPx(buttonsDim);
             h = r.height
             w = r.width-buttonsDim;
             canvases.style.top = "0px";

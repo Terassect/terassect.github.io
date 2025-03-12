@@ -21,12 +21,13 @@ class Riffagram_View extends HTMLElement
 
     resize(){
         const r = this.getBoundingClientRect();
-        const parmsW = window.innerHeight*0.05;//r.height*0.05;
+        const parmsW = Math.max(window.innerHeight,window.innerWidth)*0.05;//r.height*0.05;
         const butts = document.getElementsByTagName('button');
 
         if(r.width > r.height ){
             this.parms.style.width = numToStrPx(parmsW);
             this.parms.style.height = "100%";
+
             this.pianoRoll.style.width = numToStrPx(r.width - parmsW);
             this.pianoRoll.style.left = numToStrPx(parmsW);
             this.pianoRoll.style.height = "100%";
@@ -42,6 +43,7 @@ class Riffagram_View extends HTMLElement
         } else {
             this.parms.style.height = numToStrPx(parmsW);
             this.parms.style.width =  numToStrPx(r.width);
+
             const tempo = document.getElementById("tempoInput");
             tempo.style.position = "inherit";
 
@@ -54,9 +56,7 @@ class Riffagram_View extends HTMLElement
             this.pianoRoll.style.height = numToStrPx(r.height - parmsW);
             this.pianoRoll.style.top = numToStrPx(parmsW);
             this.pianoRoll.style.left = "0px";
-
         }
-
 
         for( const e of document.getElementsByTagName('button') ){
             e.style.width = numToStrPx(parmsW);
@@ -97,7 +97,7 @@ class Riffagram_View extends HTMLElement
         this.pianoRoll.procChangePatternMetadata(this.pianoRoll.pattern);
         
         const playButton = this.querySelector('#playButton');
-        playButton.style.transition = "background-color 0.25s ease";
+        playButton.style.transition = "background-color 0.1s ease";
         playButton.fadeTimeout ;
         this.patchConnection.addEndpointListener("patternTimeOut",(e) => {
             this.pianoRoll.setPlayingTime(e);
@@ -146,9 +146,6 @@ class Riffagram_View extends HTMLElement
             this.patchConnection.sendEventOrValue('stop',[]);
         }
 
-        this.querySelector("#tempoInput").onchange = (e) => {
-        }
-
         const postStateToUrl = (pattern) => {
             var extras = {
                 tempo: parseInt(this.querySelector("#tempoInput").innerHTML)
@@ -176,8 +173,7 @@ class Riffagram_View extends HTMLElement
 
                 this.pianoRoll.draw();
 
-                this.querySelector("#tempoInput").value = pattern.tempo ? pattern.tempo: defaults.tempo ;
-                this.querySelector("#tempoInput").onchange();
+                this.querySelector("#tempoInput").innerHTML = pattern.tempo ? pattern.tempo: defaults.tempo ;
             } catch (error) {
             }
         }
@@ -226,6 +222,7 @@ class Riffagram_View extends HTMLElement
             tempo.val = Math.floor(tempo.val);
             tempo.innerHTML = tempo.val.toString();
             this.patchConnection.sendEventOrValue('tempoIn',tempo.val);
+            this.pianoRoll.patternChanged();
         };
     
         tempo.addEventListener("touchstart",(e)=>{
