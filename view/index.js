@@ -172,8 +172,11 @@ class Riffagram_View extends HTMLElement
                 const pattern = JSON.parse( JSONCrush.uncrush(s) );
                 this.pianoRoll.setPattern(pattern);
 
-                this.querySelector("#tempoInput").innerHTML = pattern.tempo ? pattern.tempo: defaults.tempo ;
-                
+                const tempo = pattern.tempo ? pattern.tempo: defaults.tempo ;
+
+                this.querySelector("#tempoInput").innerHTML = tempo
+                this.patchConnection.sendEventOrValue('tempoIn',tempo);
+
                 this.pianoRoll.draw();
 
             } catch (error) {
