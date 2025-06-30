@@ -149,7 +149,18 @@ class PianoRoll extends HTMLElement {
         </div>
         `;
 
-        this.pointerHandler = this.querySelector("#pointerHandler")
+        this.pointerHandler = this.querySelector("#pointerHandler");
+
+        this.pointerHandler.onwheel = (e) => {
+            var event = {};
+            event['movementX'] = -e.deltaX;
+            event['movementY'] = -e.deltaY;
+            this.pan(event);
+        };
+
+        this.pointerHandler.onmousemove = (e) => {
+            console.log(e.buttons);
+        }
 
         var moveButton = this.querySelector("#moveButton");
         var moveButtonAnimation = moveButton.animate([{background:"yellow"},{background:"red"},{background:"yellow"}] , {duration:1000, iterations:"Infinity"})
@@ -487,7 +498,7 @@ class PianoRoll extends HTMLElement {
         const bpb = this.pattern.bpb;
 
         var tr = this.pattern.lr;
-        tr[0] = Math.min(tr[0],boundses.timeRange[0]);
+        tr[0] = Math.min(tr[0],boundses.timeRange[0],this.pattern.se[0]);
         tr[0] = Math.floor(tr[0]/bpb)*bpb;
         tr[1] = Math.max(tr[1],boundses.timeRange[1]);
         tr[1] = Math.ceil(tr[1]/bpb)*bpb;

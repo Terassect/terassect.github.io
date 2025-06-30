@@ -41,23 +41,23 @@ class Riffagram_View extends HTMLElement
             this.pianoRoll.style.top = "0px";
 
             const tempo = document.getElementById("tempoInput");
-            tempo.style.position = "relative";
-            tempo.style.fontSize = numToStrPx(parmsW/2);
-            tempo.style.top = "0px";
-            tempo.style.height = numToStrPx(parmsW);
-            tempo.style.width = numToStrPx(parmsW);
+            tempoInput.style.position = "relative";
+            tempoInput.style.fontSize = numToStrPx(parmsW/2);
+            tempoInput.style.top = "0px";
+            tempoInput.style.height = numToStrPx(parmsW);
+            tempoInput.style.width = numToStrPx(parmsW);
             
         } else {
             this.parms.style.height = numToStrPx(parmsW);
             this.parms.style.width =  numToStrPx(r.width);
 
             const tempo = document.getElementById("tempoInput");
-            tempo.style.position = "inherit";
+            tempoInput.style.position = "inherit";
 
-            tempo.style.fontSize = numToStrPx(parmsW);
-            tempo.style.top = "0px";
-            tempo.style.height = numToStrPx(parmsW);
-            tempo.style.width = numToStrPx(2*parmsW);
+            tempoInput.style.fontSize = numToStrPx(parmsW);
+            tempoInput.style.top = "0px";
+            tempoInput.style.height = numToStrPx(parmsW);
+            tempoInput.style.width = numToStrPx(2*parmsW);
 
             this.pianoRoll.style.width = numToStrPx(r.width);
             this.pianoRoll.style.height = numToStrPx(r.height - parmsW);
