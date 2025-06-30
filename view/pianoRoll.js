@@ -1,5 +1,18 @@
 import PointerHandler from "./PointerHandler.js"
 
+const defaultPattern = {
+    se: [0, 65536],  //start, end
+    lr: [0, 8],  //loop range
+    spb: 4,    //steps per beat
+    bpb: 4,    //beats per bar
+    //notes:  startTime, endTime, noteNum, Vel
+    ns: [
+        [0.0, 0.5, 60, 100],
+        [1.0, 1.5, 64, 100],
+        [4., 5.0, 67, 100]
+    ]
+}
+
 class PianoRoll extends HTMLElement {
 
     colors = {
@@ -7,7 +20,6 @@ class PianoRoll extends HTMLElement {
         noteH: 'rgb(255,0,255)',
         gridLine: 'rgb(150,150,150)',
         timeSelection: 'rgb(100,255,100,0.1)',
-
     }
 
     pr;
@@ -30,19 +42,7 @@ class PianoRoll extends HTMLElement {
 
     connectedCallbackFinished = false;
 
-    pattern = {
-        se: [0, 8],  //start, end
-        lr: [0, 8],  //loop range
-        spb: 4,    //steps per beat
-        bpb: 4,    //beats per bar
-        //notes:  startTime, endTime, noteNum, Vel
-        ns: [
-            [0.0, 0.5, 60, 100],
-            [1.0, 1.5, 64, 100],
-            [4., 5.0, 67, 100]
-        ]
-
-    }
+    pattern = defaultPattern;
 
     noteCopyBuffer = [];
 
@@ -67,6 +67,8 @@ class PianoRoll extends HTMLElement {
         var canvases = this.querySelector("#canvases");
         const buttonsDim = Math.max(window.innerHeight,window.innerWidth)*0.05;
         var w,h;
+
+        const positionRegion = document.querySelector("#positionRegion");
         
         if(r.width < r.height){
             h = r.height-buttonsDim;
@@ -76,6 +78,8 @@ class PianoRoll extends HTMLElement {
             buttons.style.height = buttonsDim.toString()+"px";
             canvases.style.left = "0px";
             canvases.style.top = numToStrPx(buttonsDim);
+
+            
 
         } else {
             h = r.height
@@ -136,6 +140,7 @@ class PianoRoll extends HTMLElement {
                 </svg>
             </button>
         </div>
+        <div id="positionRegion"></div>
         <div id="canvases">
             <meta id="Deleting this will break things" />
             <canvas id="pianoRollCa"></canvas>
@@ -345,12 +350,18 @@ class PianoRoll extends HTMLElement {
 
                     case "startend0": this.setStartend( this.pattern.se.with( 0, qt ) ); break;
                     case "startend1": this.setStartend( this.pattern.se.with( 1, qt ) ); break;
-                    case "loopRange0": this.setLoop( this.pattern.lr.with( 0, qt ) ); break;
-                    case "loopRange1": this.setLoop( this.pattern.lr.with( 1, qt ) ); break;
+                    case "loopRange0":
+                        var nqt = (this.pattern.lr[1]-qt < this.quantBeats) ? this.pattern.lr[1]-this.quantBeats : qt;
+                        this.setLoop( this.pattern.lr.with( 0, nqt ) ); 
+                    break;
+                    case "loopRange1": 
+                        var nqt = (qt-this.pattern.lr[0] < this.quantBeats) ? this.pattern.lr[0]+this.quantBeats : qt;
+                        this.setLoop( this.pattern.lr.with( 1, nqt ) ); 
+                    break;
             }
             setButtonsVisibility( this.selectedNoteIdxs.length > 0 )
 
-            if(['startend','loopRang'].includes(this.currentOperation.slice(0,8))){return;}
+            if(['startend','loopRange'].includes(this.currentOperation.slice(0,8))){return;}
 
             ///Scroll if drag near margins
             const scrollMarginSize=this.pro.width*0.1;
@@ -456,6 +467,38 @@ class PianoRoll extends HTMLElement {
         console.log(`Attribute ${name} has changed.`);
     }
 
+    findTimeAndNoteBounds() {
+        const starts = this.pattern.ns.map(n => n[0]);
+        const ends = this.pattern.ns.map(n => n[1]);
+        const notes = this.pattern.ns.map(n => n[2]);
+
+        const tr = [Math.min(...starts), Math.max(...ends)];
+        const nr = [Math.min(...notes), Math.max(...notes)];
+
+        return {timeRange: tr , noteRange: nr};
+    }
+
+    zoomToFit(){
+        const boundses = this.findTimeAndNoteBounds();
+        const len = boundses.timeRange[1] - boundses.timeRange[0];
+        const tMargin = len <= 0 ? 1 : len*0.05;
+        const nMargin = 1;
+
+        const bpb = this.pattern.bpb;
+
+        var tr = this.pattern.lr;
+        tr[0] = Math.min(tr[0],boundses.timeRange[0]);
+        tr[0] = Math.floor(tr[0]/bpb)*bpb;
+        tr[1] = Math.max(tr[1],boundses.timeRange[1]);
+        tr[1] = Math.ceil(tr[1]/bpb)*bpb;
+        const nr = boundses.noteRange;
+        this.visibleTimeRange = [ tr[0] - tMargin, tr[1] + tMargin ];
+        this.visibleNoteRange = [ nr[0] - nMargin, nr[1] + 2*nMargin ];
+
+        this.draw();
+        this.resize();
+
+    }
 
 
     /////////////////////////////////////////////////////////////////////
@@ -512,7 +555,8 @@ class PianoRoll extends HTMLElement {
     }
 
     setLoop(loop) {
-        loop = this.sanitizeRange(loop)
+        loop = this.sanitizeRange(loop);
+
         this.pattern.lr = loop;
         this.draw();
 

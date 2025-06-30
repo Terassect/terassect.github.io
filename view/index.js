@@ -172,10 +172,12 @@ class Riffagram_View extends HTMLElement
                 const pattern = JSON.parse( JSONCrush.uncrush(s) );
                 this.pianoRoll.setPattern(pattern);
 
+                this.querySelector("#tempoInput").innerHTML = pattern.tempo ? pattern.tempo: defaults.tempo ;
+                
                 this.pianoRoll.draw();
 
-                this.querySelector("#tempoInput").innerHTML = pattern.tempo ? pattern.tempo: defaults.tempo ;
             } catch (error) {
+                console.log(error)
             }
         }
 
@@ -238,14 +240,19 @@ class Riffagram_View extends HTMLElement
 
         this.patchConnection.sendEventOrValue('stop',[]);
 
-        getStateFromUrl();
 
         window.addEventListener('resize', (event) => {
             this.resize();
          }, true);
 
-         this.resize();
-         console.log(window.innerWidth,window.innerHeight,this.getBoundingClientRect())
+        this.resize();
+        
+        getStateFromUrl();
+
+        console.log(window.innerWidth,window.innerHeight,this.getBoundingClientRect());
+
+        this.pianoRoll.zoomToFit();
+        setTimeout(()=>{this.pianoRoll.resize();},200);
 
     }
 
