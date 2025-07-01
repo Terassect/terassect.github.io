@@ -18,7 +18,7 @@ class PointerHandler extends HTMLElement{
     doubleDown(z){}
 
     singleUp(z,z0){}
-    singleDrag(z,zPrev,z0){}
+    singleDrag(z,zPrev,z0,e){}
     singleDown(z){}
 
     convertToLocal(event){
@@ -85,7 +85,7 @@ class PointerHandler extends HTMLElement{
             const h = this.getCurrentlyHeld().slice();
 
             if(this.downs.length == 1 ){
-                this.singleDrag(h[0],hPrev[0],this.downs[0]);
+                this.singleDrag(h[0],hPrev[0],this.downs[0],event);
             }
             if(this.downs.length == 2 ) {
                 this.doubleDrag(h,hPrev);
