@@ -153,13 +153,18 @@ class PianoRoll extends HTMLElement {
 
         this.pointerHandler.onwheel = (e) => {
             var event = {};
-            event['movementX'] = -e.deltaX;
-            event['movementY'] = -e.deltaY;
-            this.pan(event);
+            event['movementX'] = -e.deltaX/100.;
+            event['movementY'] = -e.deltaY/10.;
+            event['clientX'] = e.clientX;
+            event['clientY'] = e.clientY;
+            // console.log(event);
+            this.zoom(event);
         };
 
         this.pointerHandler.onmousemove = (e) => {
-            console.log(e.buttons);
+            if (e.buttons == 2){
+                this.pan(e);
+            }
         }
 
         var moveButton = this.querySelector("#moveButton");
@@ -880,7 +885,7 @@ class PianoRoll extends HTMLElement {
         this.draw();
     }
 
-    zoom(e){
+     zoom(e){
         var dy = Math.pow(1.011,e.movementY);
 
         // console.log(dy);
@@ -891,13 +896,13 @@ class PianoRoll extends HTMLElement {
         this.visibleTimeRange[0] = t + (this.visibleTimeRange[0]-t)*dy;
         this.visibleTimeRange[1] = t + (this.visibleTimeRange[1]-t)*dy;
 
-         var dx = e.movementX;
+        var dx = e.movementX;
 
+        console.log(dx,dy,x,t);
 
-        if(dx > 5 || dx < -5  ){
-            this.visibleNoteRange[0] += Math.sign(dx);
-            this.visibleNoteRange[1] -= Math.sign(dx);
-        }
+        this.visibleNoteRange[0] += dx;// Math.sign(dx);
+        this.visibleNoteRange[1] -= dx;//Math.sign(dx);
+    
         if ( this.visibleNoteRange[1] <= this.visibleNoteRange[0]){
             this.visibleNoteRange[0] -= 1;
             this.visibleNoteRange[1] += 1;
