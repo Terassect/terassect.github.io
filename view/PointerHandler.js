@@ -8,6 +8,7 @@ class PointerHandler extends HTMLElement{
 
     downs = [];
     heldCoords = {};
+    r0 = [];
 
     clickTimeout;
 
@@ -21,11 +22,25 @@ class PointerHandler extends HTMLElement{
     singleDrag(z,zPrev,z0,e){}
     singleDown(z){}
 
+    rightDrag(z,z0){}
+    rightDown(z){}
+    rightUp(z,z0){}
+
     convertToLocal(event){
         const rect = this.getBoundingClientRect();
         const x0 = rect.left;
         const y0 = rect.top;
-        return { x:event.x-x0, y:event.y-y0, id:event.pointerId }
+        const e = {};
+        e.x = event.x-x0;
+        e.y = event.y-y0;
+        e.id = event.pointerId;
+        if(event.deltaX){e.deltaX = event.deltaX}
+        if(event.deltaY){e.deltaY = event.deltaY}
+        if(event.deltaX){e.deltaX = event.deltaX}
+        if(event.deltaY){e.deltaY = event.deltaY}
+        e.movementX = event.movementX;
+        e.movementY = event.movementY;
+        return e;
     }
 
     connectedCallback() {
@@ -41,6 +56,13 @@ class PointerHandler extends HTMLElement{
 
         this.onpointerdown = (event) => {
             const e = this.convertToLocal(event)
+            if(event.buttons == 2){
+                this.r0=e;
+                this.rightDown(e);
+            }
+
+            if(event.buttons != 1){return;}
+
             this.downs.push(e);
             this.heldCoords[e.id] = {x:e.x, y:e.y};
 
@@ -48,37 +70,35 @@ class PointerHandler extends HTMLElement{
                 this.clickTimeout = setTimeout(()=>{this.clickTimeout=null;},100)
                 this.singleDown(this.downs[0])
             } 
-            // if (this.downs.length > 1 && this.clickTimeout){ this.clickTimeout = null;}
 
             if(this.downs.length == 2){this.doubleDown(this.downs[1])}
 
-            this.log("down" + e.id  );
 
         }
 
         this.onpointerup = (event) => {
-            this.log("up")
             const e = this.convertToLocal(event)
 
             if(this.downs.length == 1){ this.singleUp(e, this.downs[0]) }
             if(this.downs.length == 2){ this.doubleUp(e, this.downs[0]) }
 
-            this.log("\t" + e.id?.toString() + " " + JSON.stringify(this.downs.map(d=>d.id)))
             this.downs = this.downs.filter(d => d.id != e.id);
-            this.log( "\t" + e.id?.toString()+" " +JSON.stringify(this.downs.map(d=>d.id)) )
-
-            if(this.downs.length == 0){this.log("\n")}
         }
 
         this.onmouseleave = (e)=>{
-            this.log("leave\n")
             this.onpointerup(e)
         }
 
         this.onpointermove = (event) => {
-            if(this.clickTimeout){return;}
-
             const e = this.convertToLocal(event)
+
+            if(event.buttons == 2)
+            {
+                this.rightDrag(e)
+            }
+
+            if(this.clickTimeout || event.buttons != 1){return;}
+
 
             const hPrev = this.getCurrentlyHeld().slice();
             this.heldCoords[e.id] = { x:e.x, y:e.y }
