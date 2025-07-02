@@ -170,6 +170,7 @@ class Riffagram_View extends HTMLElement
             s=decodeURIComponent(s);
             try{
                 const pattern = JSON.parse( JSONCrush.uncrush(s) );
+
                 this.pianoRoll.setPattern(pattern);
 
                 const tempo = pattern.tempo ? pattern.tempo: defaults.tempo ;

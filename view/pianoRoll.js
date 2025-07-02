@@ -465,8 +465,9 @@ class PianoRoll extends HTMLElement {
         pattern.ns.forEach(note => {
             this.procAddNewNote(note);
         })
-
         this.pattern = pattern;
+        console.log("received",this.pattern.lr)
+
     }
 
     disconnectedCallback() {
@@ -500,7 +501,7 @@ class PianoRoll extends HTMLElement {
 
         const bpb = this.pattern.bpb;
 
-        var tr = this.pattern.lr;
+        var tr = this.pattern.lr.slice();
         tr[0] = Math.min(tr[0],boundses.timeRange[0],this.pattern.se[0]);
         tr[0] = Math.floor(tr[0]/bpb)*bpb;
         tr[1] = Math.max(tr[1],boundses.timeRange[1]);
@@ -570,7 +571,7 @@ class PianoRoll extends HTMLElement {
 
     setLoop(loop) {
         loop = this.sanitizeRange(loop);
-
+        console.log("setloop called:",loop);
         this.pattern.lr = loop;
         this.draw();
 
@@ -642,7 +643,7 @@ class PianoRoll extends HTMLElement {
         path.roundRect(
             x, y,
             xp1 - x, yp1 - y
-            ,5
+            ,2
         )
         return path;
     }
