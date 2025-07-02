@@ -175,7 +175,10 @@ class Riffagram_View extends HTMLElement
 
                 const tempo = pattern.tempo ? pattern.tempo: defaults.tempo ;
 
-                this.querySelector("#tempoInput").innerHTML = tempo
+                tempoInput.innerHTML = tempo;
+                tempoInput.val = tempo;
+                tempoInput.dsVal = tempo;
+
                 this.patchConnection.sendEventOrValue('tempoIn',tempo);
 
                 this.pianoRoll.draw();

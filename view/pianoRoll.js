@@ -427,7 +427,7 @@ class PianoRoll extends HTMLElement {
         }
 
         this.pointerHandler.rightDrag = (z,z0) => {
-            console.log(z);
+            //console.log(z);
             this.pan(z);
         }
 
